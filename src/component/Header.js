@@ -23,11 +23,11 @@ const Header = () => {
       
 
       {/* Search Bar */}
-      <form className="relative w-full max-w-md mx-auto">
+      <form className="relative flex w-full max-w-md mx-auto">
         <input
           type="search"
           placeholder="Search..."
-          className="peer transition-all duration-300 ease-in-out cursor-pointer relative z-10 h-12 w-12 sm:w-12 rounded-full border bg-white pl-12 outline-none focus:w-full focus:cursor-text focus:border-lime-300 focus:pl-16 focus:pr-4"
+          className="peer transition-all duration-300 ease-in-out cursor-pointer relative z-10 h-12 w-12 sm:w-12 rounded-full border bg-transparent pl-12 outline-none focus:w-full focus:cursor-text focus:border-lime-300 focus:pl-16 focus:pr-4"
         />
         <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
           <svg

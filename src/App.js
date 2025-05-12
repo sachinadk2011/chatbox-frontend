@@ -8,11 +8,13 @@ import {
 } from "react-router-dom";
 import SignUp from './pages/SignUp';
 import ChatRoom from './pages/ChatRoom';
+import { UserState } from './context/users/UserState';
 
 
 function App() {
   return (
    <>
+   <UserState>
     <Router>
       <Routes>
         <Route path="/login" element={<Login />} />
@@ -20,6 +22,7 @@ function App() {
         <Route path="/" element={<ChatRoom />} />
       </Routes>
     </Router>
+    </UserState>
 
 
    </>

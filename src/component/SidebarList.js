@@ -1,34 +1,15 @@
 import React from 'react'
 import ChatList from './ChatList';
 import Header from './Header';
+import UserContext from '../context/users/UserContext';
 
 const SidebarList = () => {
-    const chats = [
-        {id: 1,
-        name: "John Doe",
-        message: "Hello, how are you?"},
-        {
-            id: 2,
-            name: "Jane Smith",
-            message: "Are you coming to the party?"
-        },
-        {
-            id: 3,
-            name: "Alice Johnson",
-            message: "Let's catch up sometime!"
-        },
-        {
-            id: 4,
-            name: "Bob Brown",
-            message: "Did you finish the project?"
-        },
-        {
-            id: 5,
-            name: "Charlie Davis",
-            message: "Can you send me the report?"
-        }
-
-    ]
+    const { chats, setUser } = React.useContext(UserContext);
+    const DisplayChat = (e) => {
+        setUser(e.name)
+        console.log(e.name)
+    }
+    
     return(
         <>
         
@@ -41,7 +22,8 @@ const SidebarList = () => {
           {chats.map((element)=>{
             return(
             <div key={element.id} className="flex items-center mb-4 cursor-pointer hover:bg-gray-100 p-2 rounded-md">
-              <ChatList  name={element.name} message={element.message.slice(0,10)} />
+              <ChatList  name={element.name} message={element.message.slice(0,20)} 
+              onClick={()=>DisplayChat(element)} />
             </div>
         )})}
         </div>

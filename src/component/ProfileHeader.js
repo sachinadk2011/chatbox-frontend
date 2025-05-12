@@ -1,6 +1,10 @@
 import React from 'react';
-
-const ProfileHeader = (props) => {
+import UserContext from '../context/users/UserContext';
+/* 
+thsi is that opened chat window where user can see his profile and call .. option like in messenger
+*/
+const ProfileHeader = () => {
+   const { chats, user } = React.useContext(UserContext);
     return(
         <>
         <div className="relative flex items-center space-x-4">
@@ -10,11 +14,11 @@ const ProfileHeader = (props) => {
                   <circle cx="8" cy="8" r="8" fill="currentColor"></circle>
                </svg>
             </span>
-         <img src={props.image} alt="" className="w-10 sm:w-16 h-10 sm:h-16 rounded-full" />
+         <img src={`https://ui-avatars.com/api/?name=${!user?chats[0].name:user}&background=random&color=random&bold=true&rounded=true`} alt="" className="w-10 sm:w-16 h-10 sm:h-16 rounded-full" />
          </div>
          <div className="flex flex-col leading-tight">
             <div className="text-2xl mt-1 flex items-center">
-               <span className="text-gray-700 mr-3">{props.name} </span>
+               <span className="text-gray-700 mr-3">{!user?chats[0].name:user}</span>
             </div>
             
          </div>
