@@ -1,13 +1,13 @@
 import React from 'react';
 import './App.css';
-import Login from './pages/Login';
+import Login from './auth_pages/Login';
 import {
   BrowserRouter as Router,
   Routes,
   Route
 } from "react-router-dom";
-import SignUp from './pages/SignUp';
-import ChatRoom from './pages/ChatRoom';
+import SignUp from './auth_pages/SignUp';
+import ChatRoom from './auth_pages/ChatRoom';
 import { UserState } from './context/users/UserState';
 
 

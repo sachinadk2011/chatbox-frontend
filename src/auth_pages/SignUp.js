@@ -1,6 +1,47 @@
-import React from 'react'
+import React, { useContext, useState } from 'react'
+import UserContext from '../context/users/UserContext';
+
 
 const SignUp = () => {
+  const {signup} = useContext(UserContext);
+  const [credential, setCredential] = useState({
+    email: "",
+    password: "",
+    name: "",
+    cpassword: "",
+  });
+
+  const HandleSignup = async()=>{
+    const {name,email,password, cpassword} = credential;
+    /* if (!name && !email && !password && !cpassword){
+      console.log("cant be empty")
+    } */
+   if (cpassword !== password){
+    console.log("dont match")
+    setCredential({
+    email: "",
+    password: "",
+    name: "",
+    cpassword: "",
+  });
+  return;
+   }
+    const json = await signup(name,email , password)
+    console.log(json);
+    
+    if (json.success) {
+      console.log("json.message: ", json.message);
+      
+    }
+    else{
+      console.log("Error creating account: ", json.error);
+      
+    }
+  }
+
+  const ochange = (e) => {
+    setCredential({ ...credential, [e.target.name]: e.target.value });
+  };
     return(
         <>
        
@@ -21,26 +62,57 @@ const SignUp = () => {
             <div className="relative">
               <p className="bg-white pt-0 pr-2 pb-0 pl-2 -mt-3 mr-0 mb-0 ml-2 font-medium text-gray-600
                   absolute">Username</p>
-              <input placeholder="John" type="text" className="border placeholder-gray-400 focus:outline-none
+              <input  type="text" className="border placeholder-gray-400 focus:outline-none
                   focus:border-black w-full pt-4 pr-4 pb-4 pl-4 mt-2 mr-0 mb-0 ml-0 text-base block bg-white
-                  border-gray-300 rounded-md"/>
+                  border-gray-300 rounded-md" id="name"
+            name="name"
+            onChange={ochange}
+            value={credential.name}
+            minLength={3}
+            required/>
             </div>
             <div className="relative">
               <p className="bg-white pt-0 pr-2 pb-0 pl-2 -mt-3 mr-0 mb-0 ml-2 font-medium text-gray-600 absolute">Email</p>
               <input placeholder="123@ex.com" type="text" className="border placeholder-gray-400 focus:outline-none
                   focus:border-black w-full pt-4 pr-4 pb-4 pl-4 mt-2 mr-0 mb-0 ml-0 text-base block bg-white
-                  border-gray-300 rounded-md"/>
+                  border-gray-300 rounded-md"
+                   id="email"
+            name="email"
+            onChange={ochange}
+            value={credential.email}
+            aria-describedby="emailHelp"
+            required/>
             </div>
             <div className="relative">
               <p className="bg-white pt-0 pr-2 pb-0 pl-2 -mt-3 mr-0 mb-0 ml-2 font-medium text-gray-600
                   absolute">Password</p>
               <input placeholder="Password" type="password" className="border placeholder-gray-400 focus:outline-none
                   focus:border-black w-full pt-4 pr-4 pb-4 pl-4 mt-2 mr-0 mb-0 ml-0 text-base block bg-white
-                  border-gray-300 rounded-md"/>
+                  border-gray-300 rounded-md"
+                  id="password"
+            name="password"
+            minLength={8}
+            onChange={ochange}
+            value={credential.password}
+            required/>
+            </div>
+            <div className="relative">
+              <p className="bg-white pt-0 pr-2 pb-0 pl-2 -mt-3 mr-0 mb-0 ml-2 font-medium text-gray-600
+                  absolute">Confirm Password</p>
+              <input placeholder="Confirm Password" type="password" className="border placeholder-gray-400 focus:outline-none
+                  focus:border-black w-full pt-4 pr-4 pb-4 pl-4 mt-2 mr-0 mb-0 ml-0 text-base block bg-white
+                  border-gray-300 rounded-md"
+                  id="cpassword"
+            name="cpassword"
+            minLength={8}
+            onChange={ochange}
+            value={credential.cpassword}
+            required/>
             </div>
             <div className="relative">
               <a className="w-full inline-block pt-4 pr-5 pb-4 pl-5 text-xl font-medium text-center text-white bg-indigo-500
-                  rounded-lg transition duration-200 hover:bg-indigo-600 ease">Submit</a>
+                  rounded-lg transition duration-200 hover:bg-indigo-600 ease"
+                  onClick={HandleSignup}>Submit</a>
             </div>
           </div>
         </div>
