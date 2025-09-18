@@ -9,12 +9,16 @@ import {
 import SignUp from './auth_pages/SignUp';
 import ChatRoom from './auth_pages/ChatRoom';
 import { UserState } from './context/users/UserState';
+import { MessageState } from './context/message/MessageState';
+import { FriendsState } from './context/friends/FriendsState';
 
 
 function App() {
   return (
    <>
    <UserState>
+      <FriendsState>
+     <MessageState>
     <Router>
       <Routes>
         <Route path="/login" element={<Login />} />
@@ -22,6 +26,8 @@ function App() {
         <Route path="/" element={<ChatRoom />} />
       </Routes>
     </Router>
+    </MessageState>
+    </FriendsState>
     </UserState>
 
 
