@@ -1,5 +1,5 @@
 import UserContext from "./UserContext";
-import React, { useState } from 'react';
+
 import axios from 'axios';
 
 
@@ -8,18 +8,20 @@ export const UserState = (props) => {
 
 
   
-  const [user, setUser] = React.useState("")
+  
 
   //signup
   const signup = async(name, email, password)=>{
-    try{
+    
     const response = await axios.post('/api/auth/createuser', { name,email, password });
+
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Signup failed');
+    }
     
     return response.data;
   
-}catch(error){
-  return error.response?.data || { success: false, message: error.message || "Something went wrong" };
-}
+
   }
 
 
@@ -37,10 +39,26 @@ export const UserState = (props) => {
 }
   }
 
+  // gets user
+  const getUser = async()=>{
+    try {
+      const response = await axios.get('/api/auth/getuser', 
+        {
+          headers: {
+            'auth-token': localStorage.getItem('token')
+          }
+        }
+      );
+      
+      return response.data;
+    } catch (error) {
+      return error.response?.data || { success: false, message: error.message || "Something went wrong" };
+    }
 
-    
+  }
+
   return (
-    <UserContext.Provider value={{ user, setUser,login,signup }}>
+    <UserContext.Provider value={{ login, signup, getUser }}>
       {props.children}
     </UserContext.Provider>
   );

@@ -6,7 +6,7 @@ import UserContext from '../context/users/UserContext';
 
 const Login = () => {
   let navigate = useNavigate();
-  const {login} = useContext(UserContext);
+  const {login, getUser} = useContext(UserContext);
     const [credential, setCredential] = useState({
       email: "",
       password: "",
@@ -21,20 +21,31 @@ const Login = () => {
   const handleSubmit = async(event) => {
     event.preventDefault();
     const {email, password} = credential;
-    const json = await login(email, password);
-    console.log(json);
-    if (json.success) {
-      console.log("json.message: ", json.message);
-      localStorage.setItem("token", json.token);
-      localStorage.setItem("user", JSON.stringify(json.user));
-      // setUser(json.user);
-      navigate("/");
-    }
-    else{
-      console.log("Error creating account: ", json.error);
+    try {
+      const json = await login(email, password);
       
+      if (!json.success) {
+        throw new Error(json.error || 'Login failed');
+      } 
+        console.log("json.message: ", json.message, json.user, json.token);
+        localStorage.setItem("token", json.token);
+        localStorage.setItem("user", JSON.stringify(json.user));
+        
+        const userdata = await getUser();
+        if (!userdata.success) {
+          throw new Error(userdata.message);
+        }
+        // setUser(json.user);
+        navigate("/");
+    } catch (error) {
+      setCredential({
+          email: "",
+          password: "" 
+               });
+      console.error("Error logging in:", error);
     }
-  }
+    }
+  
 
   return (
     <>
@@ -46,7 +57,7 @@ const Login = () => {
 
 <div className="lg:p-36 md:p-52 sm:20 p-8 w-full lg:w-1/2">
   <h1 className="text-2xl font-semibold mb-4">Login</h1>
-  <form action="/" onSubmit={handleSubmit} method="POST">
+  <form  onSubmit={handleSubmit} method="POST">
     
     <div className="mb-4">
       <label htmlFor="email" className="block text-gray-600">Email</label>
@@ -73,7 +84,7 @@ const Login = () => {
   </form>
   
   <div className="mt-6 text-blue-500 text-center">
-    <a href="/register" className="hover:underline">Sign up Here</a>
+    <a href="/signup" className="hover:underline">Sign up Here</a>
   </div>
 </div>
 </div>
