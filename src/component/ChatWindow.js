@@ -2,21 +2,17 @@ import React from 'react';
 import '../App.css';
 import ProfileHeader from './ProfileHeader';
 import MessageBox from './MessageBox';
-import UserContext from '../context/users/UserContext';
+import MessageContext from '../context/message/MessageContext';
 
 const ChatWindow = () => {
-   const {user, messages, setMessages} = React.useContext(UserContext);
+   const {sendMessage,Selecteduser} = React.useContext(MessageContext);
 
    const SendMessage =(e)=>{
       e.preventDefault();
       const message = e.target.elements.message.value;
-      const newMessage = {
-         id: messages.length + 1,
-         sender: "sachin adk",
-         receiver: user,
-         message: message
-      }
-      setMessages((prevMessages) => [...prevMessages, newMessage]);
+      const receiverid = Selecteduser.receiverId;
+      
+      sendMessage({message, receiverid});
       e.target.reset();
    }
     
