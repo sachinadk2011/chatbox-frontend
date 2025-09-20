@@ -1,5 +1,5 @@
 import FriendsContext from "./FriendsContext";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import axios from "axios";
 
 
@@ -10,14 +10,16 @@ export const FriendsState = (props) => {
     const [friends, setFriends] = useState([]);
 
     // Fetch all friends
-    const fetchFriends = async () => {
+    const fetchFriends = useCallback(async () => {
         try {
             const response = await axios.get('/api/friends/fetchallfriends');
+        
             setFriends(response.data);
         } catch (error) {
+            return error
             console.error("Error fetching friends:", error);
         }
-    };
+    }, []);
 
     // fetch all received frd req 
     const fetchReceivedRequests = async () => {

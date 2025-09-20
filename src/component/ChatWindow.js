@@ -6,13 +6,15 @@ import MessageContext from '../context/message/MessageContext';
 
 const ChatWindow = () => {
    const {sendMessage,Selecteduser} = React.useContext(MessageContext);
+   console.log("chatwindow "+Selecteduser.receiverId);
 
-   const SendMessage =(e)=>{
+   const SendMessage =async(e)=>{
       e.preventDefault();
       const message = e.target.elements.message.value;
-      const receiverid = Selecteduser.receiverId;
-      
-      sendMessage({message, receiverid});
+      const receiver = Selecteduser.receiverId;
+
+     const json = await sendMessage(message, receiver);
+     console.log("send message "+JSON.stringify(json));
       e.target.reset();
    }
     

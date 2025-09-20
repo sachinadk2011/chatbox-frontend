@@ -6,10 +6,10 @@ thsi is that opened chat window where user can see his profile and call .. optio
 */
 const ProfileHeader = () => {
 
-   const { SelectedUser } = useContext(MessageContext);
+   const { Selecteduser } = useContext(MessageContext);
+   console.log("pp: "+ JSON.stringify(Selecteduser));
     return(
-         <>{SelectedUser ? (
-            <>
+         <>
         <div className="relative flex items-center space-x-4">
          <div className="relative">
             <span className="absolute text-green-500 right-0 bottom-0">
@@ -17,11 +17,11 @@ const ProfileHeader = () => {
                   <circle cx="8" cy="8" r="8" fill="currentColor"></circle>
                </svg>
             </span>
-         <img src={`https://ui-avatars.com/api/?name=${SelectedUser.receiverName}&background=random&color=random&bold=true&rounded=true`} alt="" className="w-10 sm:w-16 h-10 sm:h-16 rounded-full" />
+         <img src={`https://ui-avatars.com/api/?name=${Selecteduser.receiverName}&background=random&color=random&bold=true&rounded=true`} alt="" className="w-10 sm:w-16 h-10 sm:h-16 rounded-full" />
          </div>
          <div className="flex flex-col leading-tight">
             <div className="text-2xl mt-1 flex items-center">
-               <span className="text-gray-700 mr-3">{!SelectedUser.receiverName?"guest":SelectedUser.receiverName}</span>
+               <span className="text-gray-700 mr-3">{!Selecteduser.receiverName?"guest":Selecteduser.receiverName}</span>
             </div>
             
          </div>
@@ -44,11 +44,7 @@ const ProfileHeader = () => {
          </button>
       </div>
       </>
-      ):
-      ( <div className="relative flex items-center space-x-4">
-         </div>
-      )}
-        </>
+      
     )
 }
 

@@ -1,10 +1,16 @@
 import UserContext from "./UserContext";
+import { useState } from "react";
 
 import axios from 'axios';
 
 
 export const UserState = (props) => {
   axios.defaults.baseURL = process.env.REACT_APP_URL;
+  const [user, setUser] = useState(() => {
+  const storedUser = localStorage.getItem("user");
+  return storedUser ? JSON.parse(storedUser) : null;
+});
+
 
 
   
@@ -18,7 +24,13 @@ export const UserState = (props) => {
     if (!response.data.success) {
       throw new Error(response.data.message || 'Signup failed');
     }
-    
+
+    setUser({
+      name: response.data.user.name,
+      email: response.data.user.email,
+      id: response.data.user.id
+    });
+
     return response.data;
   
 
@@ -31,7 +43,13 @@ export const UserState = (props) => {
     const response = await axios.post('/api/auth/loginuser', { email, password });
     console.log("response: ", response.data);
     
-    
+    setUser({
+      name: response.data.user.name,
+      email: response.data.user.email,
+      id: response.data.user.id
+    });
+
+
     return response.data;
   
 }catch(error){
@@ -58,7 +76,7 @@ export const UserState = (props) => {
   }
 
   return (
-    <UserContext.Provider value={{ login, signup, getUser }}>
+    <UserContext.Provider value={{ login, signup, getUser, user, setUser }}>
       {props.children}
     </UserContext.Provider>
   );

@@ -23,6 +23,7 @@ const Login = () => {
     const {email, password} = credential;
     try {
       const json = await login(email, password);
+      console.log("json: ", json, json.success);
       
       if (!json.success) {
         throw new Error(json.error || 'Login failed');
@@ -30,6 +31,8 @@ const Login = () => {
         console.log("json.message: ", json.message, json.user, json.token);
         localStorage.setItem("token", json.token);
         localStorage.setItem("user", JSON.stringify(json.user));
+        
+        console.log("user: ", localStorage.getItem("user"));
         
         const userdata = await getUser();
         if (!userdata.success) {

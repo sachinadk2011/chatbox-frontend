@@ -1,23 +1,59 @@
-import React from 'react'
+import React, {useContext, useEffect} from 'react'
 import ChatList from './ChatList';
 import Header from './Header';
 import MessageContext from '../context/message/MessageContext';
 import FriendsContext from '../context/friends/FriendsContext';
+import { useNavigate } from "react-router";
+import UserContext from '../context/users/UserContext';
 
 const SidebarList = () => {
-    const { setSelectedUser, messages } = React.useContext(MessageContext);
+   let navigate = useNavigate();
+    const { setSelectedUser, selectedUser, messages, fetchMessages } = useContext(MessageContext);
+    const { friends, fetchFriends } = useContext(FriendsContext);
+    const { user, setUser } = useContext(UserContext);
+
+    //;
     
-    const { friends } = React.useContext(FriendsContext);
+   
     const length = messages.length;
-    const DisplayChat = (friend) => {
-        setSelectedUser({
-              receiverId: friend.id,          // friend’s id
-              receiverName: friend.name,      // friend’s name
-              senderId: localStorage.getItem('user').id,              // your id
-              senderName: localStorage.getItem('user').name           // your name
-  });
-        console.log(friend.name)
+
+    useEffect( () => {
+    const fetchdata = async()=>{
+       if( await fetchFriends().error){
+      navigate("/login");
     }
+    await fetchMessages();
+
+    }
+    fetchdata();
+
+   //setUser(JSON.parse(localStorage.getItem('user')))
+  }, [fetchFriends, fetchMessages, navigate]);
+
+  //console.log("sidebarlist "+JSON.stringify(selectedUser));
+  //console.log("sidebarlist friend "+JSON.stringify(friends));
+  //console.log("sidebarlist "+JSON.stringify(messages));
+  //console.log( JSON.parse(localStorage.getItem("user")).name, JSON.parse(localStorage.getItem('user')).id);
+
+  let lastMsg = length > 0 ? messages[length - 1].message : null;
+  let previewText = "Tap to start messaging"
+  if (lastMsg){
+    let isYou = messages[length - 1].sender._id === user?.id ;
+    previewText =( isYou ? "You: ": "") +   lastMsg.slice(0, 20);
+  }
+
+    const DisplayChat = (friend) => {
+
+        setSelectedUser({
+              receiverId: friend._id,          // friend’s id
+              receiverName: friend.name,      // friend’s name
+              senderId: JSON.parse(localStorage.getItem('user')).id,              // your id
+              senderName: JSON.parse(localStorage.getItem('user')).name           // your name
+  });
+        
+       // console.log(selectedUser);
+    }
+    //console.log("1"+messages[length-1]?.sender?.name, user?.name);
     
     return(
         <>
@@ -30,12 +66,12 @@ const SidebarList = () => {
           <div className="overflow-y-auto h-screen p-3 mb-9 pb-20"  >
           {friends.map((element)=>{
             return(
-            <div key={element.id} className="flex items-center mb-4 cursor-pointer hover:bg-gray-100 p-2 rounded-md">
-              <ChatList  name={element.name} message={length > 0 ? messages[length -1].message.slice(0,20): "Chat to start messaging"}
+            <div key={element._id} className="flex items-center mb-4 cursor-pointer hover:bg-gray-100 p-2 rounded-md">
+              <ChatList  name={element.name} message={previewText}
               onClick={()=>DisplayChat(element)} />
             </div>
         )})}
-        </div>
+        </div> 
         </div>
         </>
     )

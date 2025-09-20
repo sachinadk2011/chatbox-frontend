@@ -1,5 +1,5 @@
 import MessageContext from "./MessageContext";
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import axios from 'axios';
 
 export const MessageState = (props) => {
@@ -12,37 +12,48 @@ export const MessageState = (props) => {
       {
         receiverId: null,
         senderId: null,
-        receiverName: "",
-        senderName: ""
+        receiverName: " ",
+        senderName: " "
       });
+      
       const sendername = JSON.parse(localStorage.getItem('user')).name;
+      console.log("sendername: ", sendername);
     // fetch all messages
-    const fetchMessages = async () => {
+    const fetchMessages = useCallback(async () => {
         try {
             const response = await axios.get('/api/messages/fetchallmessages');
-            
-            setMessages(response.data.messages);
-            console.log(messages);
+            const msg = response.data.messages;
+            setMessages(msg);
+            console.log(msg);
+            if (msg.length > 0) {
+            const lastMsg = msg[msg.length - 1];
             setSelectedUser({
-              receiverId: response.data.messages.receiver.name!== sendername ? response.data.messages.receiver._id : response.data.messages.sender._id,
-              senderId: response.data.messages.sender.name=== sendername ? response.data.messages.sender._id : response.data.messages.receiver._id,
-              receiverName: response.data.messages.receiver.name!== sendername ? response.data.messages.receiver.name : response.data.messages.sender.name,
-              senderName: response.data.messages.sender.name=== sendername ? response.data.messages.sender.name : response.data.messages.receiver.name
+              receiverId: lastMsg.receiver.name!== sendername ? lastMsg.receiver._id : lastMsg.sender._id,
+              senderId: lastMsg.sender.name=== sendername ? lastMsg.sender._id : lastMsg.receiver._id,
+              receiverName: lastMsg.receiver.name!== sendername ? lastMsg.receiver.name : lastMsg.sender.name,
+              senderName: lastMsg.sender.name=== sendername ? lastMsg.sender.name : lastMsg.receiver.name
             });
+          }
         } catch (error) {
           
-            console.error("Error fetching messages:", error);
+            console.error("Error fetching messages:", error.error);
         }
-    };
+    }, []);
 
     //send a message
-    const sendMessage = async (messageData, receiverId) => {
+    const sendMessage = async (message, receiver) => {
         try {
-            const response = await axios.post('/api/messages/sendmessage', { ...messageData, receiverId });
+            const response = await axios.post('/api/messages/sendmessage', { message, receiver });
+            if (!response.data.success) {
+              throw new Error(response.data.error || 'Message sending failed');
+            }
             console.log("Message sent:", response.data);
             setMessages(prevMessages => [...prevMessages, response.data.message]);
-        } catch (error) {
-            console.error("Error sending message:", error);
+            console.log(messages, response.data, response.data.message);
+            return response.data;
+          } catch (error) {
+          console.error("Error sending message:", error, error.error, error.message);
+          return error.response?.data || { success: false, message: error.message || "Something went wrong" };
         }
     };
 
