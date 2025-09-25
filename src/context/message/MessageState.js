@@ -1,10 +1,12 @@
 import MessageContext from "./MessageContext";
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useContext } from 'react';
 import axios from 'axios';
+import UserContext from "../users/UserContext"; 
 
 export const MessageState = (props) => {
     axios.defaults.baseURL = process.env.REACT_APP_URL;
     axios.defaults.headers.common['auth-token'] = localStorage.getItem('token');
+    const { user } = useContext(UserContext);
     
 
     const [messages, setMessages] = useState([]); // Example state for messages
@@ -13,15 +15,16 @@ export const MessageState = (props) => {
         receiverId: null,
         senderId: null,
         receiverName: " ",
-        senderName: " "
+        senderName: " " 
       });
-      
-      const sendername = JSON.parse(localStorage.getItem('user')).name;
-      console.log("sendername: ", sendername);
+
+      let sendername = user?.name || "";
+      console.log("sendername: ", sendername, user.name);
     // fetch all messages
     const fetchMessages = useCallback(async () => {
         try {
             const response = await axios.get('/api/messages/fetchallmessages');
+           
             const msg = response.data.messages;
             setMessages(msg);
             console.log(msg);
@@ -36,7 +39,8 @@ export const MessageState = (props) => {
           }
         } catch (error) {
           
-            console.error("Error fetching messages:", error.error);
+            console.error("Error fetching messages:", error.error, error.message, error.status);
+            return error.status;
         }
     }, []);
 

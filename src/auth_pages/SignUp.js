@@ -33,11 +33,11 @@ const SignUp = () => {
       const json = await signup(name,email , password)
       console.log(json.message);
       localStorage.setItem("token", json.token);
-      localStorage.setItem("user", JSON.stringify(json.user));
       const userdata = await getUser();
       if (!userdata.success) {
         throw new Error(userdata.message);
       }
+      localStorage.setItem("user", JSON.stringify(userdata.user));
       navigate("/");
     } catch (error) {
       console.error("Error signing up:", error);

@@ -1,15 +1,25 @@
 import UserContext from "./UserContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
 
 import axios from 'axios';
 
 
 export const UserState = (props) => {
   axios.defaults.baseURL = process.env.REACT_APP_URL;
-  const [user, setUser] = useState(() => {
-  const storedUser = localStorage.getItem("user");
-  return storedUser ? JSON.parse(storedUser) : null;
-});
+  const [user, setUser] = useState({
+    name: "",
+    email: "",
+    id: ""
+  });
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+  console.log("UserState user: ", user);
+
 
 
 
@@ -25,11 +35,7 @@ export const UserState = (props) => {
       throw new Error(response.data.message || 'Signup failed');
     }
 
-    setUser({
-      name: response.data.user.name,
-      email: response.data.user.email,
-      id: response.data.user.id
-    });
+    
 
     return response.data;
   
@@ -43,11 +49,7 @@ export const UserState = (props) => {
     const response = await axios.post('/api/auth/loginuser', { email, password });
     console.log("response: ", response.data);
     
-    setUser({
-      name: response.data.user.name,
-      email: response.data.user.email,
-      id: response.data.user.id
-    });
+    
 
 
     return response.data;
@@ -67,9 +69,16 @@ export const UserState = (props) => {
           }
         }
       );
+       
+      setUser({
+      name: response.data.user.name,
+      email: response.data.user.email,
+      id: response.data.user.id
+    });
       
-      return response.data;
+      return response.data.user;
     } catch (error) {
+      
       return error.response?.data || { success: false, message: error.message || "Something went wrong" };
     }
 

@@ -9,7 +9,10 @@ const MessageBox = () => {
     const { user } = useContext(UserContext);
 
     useEffect(() => {
-      fetchMessages();
+      const fetchMessagedata = async()=>{
+        await fetchMessages();
+      }
+      fetchMessagedata();
     }, [fetchMessages]);
 
     return(

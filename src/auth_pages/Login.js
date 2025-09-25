@@ -28,16 +28,16 @@ const Login = () => {
       if (!json.success) {
         throw new Error(json.error || 'Login failed');
       } 
-        console.log("json.message: ", json.message, json.user, json.token);
+        console.log("json.message: ", json.message ,json.token);
         localStorage.setItem("token", json.token);
-        localStorage.setItem("user", JSON.stringify(json.user));
         
-        console.log("user: ", localStorage.getItem("user"));
         
         const userdata = await getUser();
         if (!userdata.success) {
           throw new Error(userdata.message);
         }
+        localStorage.setItem("user", JSON.stringify(userdata.user));
+        console.log("user: ", localStorage.getItem("user"));
         // setUser(json.user);
         navigate("/");
     } catch (error) {

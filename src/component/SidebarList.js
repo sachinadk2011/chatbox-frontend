@@ -8,9 +8,9 @@ import UserContext from '../context/users/UserContext';
 
 const SidebarList = () => {
    let navigate = useNavigate();
-    const { setSelectedUser, selectedUser, messages, fetchMessages } = useContext(MessageContext);
+    const { setSelectedUser, messages, fetchMessages } = useContext(MessageContext);
     const { friends, fetchFriends } = useContext(FriendsContext);
-    const { user, setUser } = useContext(UserContext);
+    const { user } = useContext(UserContext);
 
     //;
     
@@ -19,9 +19,7 @@ const SidebarList = () => {
 
     useEffect( () => {
     const fetchdata = async()=>{
-       if( await fetchFriends().error){
-      navigate("/login");
-    }
+      await fetchFriends();
     await fetchMessages();
 
     }
@@ -43,6 +41,8 @@ const SidebarList = () => {
   }
 
     const DisplayChat = (friend) => {
+      console.log("friend: ", friend);
+      console.log("user: ", user);
 
         setSelectedUser({
               receiverId: friend._id,          // friend’s id
