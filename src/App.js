@@ -38,9 +38,9 @@ function AppContent() {
       if (userData) {
         console.log("userData: ", userData);
         setUser({
-          name: userData.name,
-          email: userData.email,
-          id: userData.id,
+          name: userData.user.name,
+          email: userData.user.email,
+          id: userData.user.id,
         });
       }
     } catch (error) {

@@ -8,7 +8,7 @@ sidebarlist act as list of people name with certain message
 and chatwindow is certain person opened message in right side */
 const ChatRoom = () => {
     const {Selecteduser} = React.useContext(MessageContext);
-    console.log("chatroom "+Selecteduser);
+    console.log("chatroom "+ Selecteduser);
 
     return(
         <>

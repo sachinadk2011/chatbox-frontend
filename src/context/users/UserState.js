@@ -7,18 +7,18 @@ import axios from 'axios';
 
 export const UserState = (props) => {
   axios.defaults.baseURL = process.env.REACT_APP_URL;
-  const [user, setUser] = useState({
-    name: "",
-    email: "",
-    id: ""
-  });
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+  const [user, setUser] = useState(
+    () => {
+      const storedUser = localStorage.getItem("user");
+      return storedUser ? JSON.parse(storedUser) : {
+        name: "",
+        email: "",
+        id: ""
+      };
     }
-  }, []);
-  console.log("UserState user: ", user);
+  );
+  
+
 
 
 
@@ -62,21 +62,20 @@ export const UserState = (props) => {
   // gets user
   const getUser = async()=>{
     try {
-      const response = await axios.get('/api/auth/getuser', 
-        {
-          headers: {
-            'auth-token': localStorage.getItem('token')
-          }
-        }
+      const response = await axios.get('/api/auth/getuser'
+        
       );
+      console.log("getUser response:", response.data);
+
        
       setUser({
       name: response.data.user.name,
       email: response.data.user.email,
       id: response.data.user.id
     });
+    console.log("getUser response:", response.data);
       
-      return response.data.user;
+      return response.data;
     } catch (error) {
       
       return error.response?.data || { success: false, message: error.message || "Something went wrong" };

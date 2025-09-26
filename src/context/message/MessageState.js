@@ -18,8 +18,6 @@ export const MessageState = (props) => {
         senderName: " " 
       });
 
-      let sendername = user?.name || "";
-      console.log("sendername: ", sendername, user.name);
     // fetch all messages
     const fetchMessages = useCallback(async () => {
         try {
@@ -28,15 +26,7 @@ export const MessageState = (props) => {
             const msg = response.data.messages;
             setMessages(msg);
             console.log(msg);
-            if (msg.length > 0) {
-            const lastMsg = msg[msg.length - 1];
-            setSelectedUser({
-              receiverId: lastMsg.receiver.name!== sendername ? lastMsg.receiver._id : lastMsg.sender._id,
-              senderId: lastMsg.sender.name=== sendername ? lastMsg.sender._id : lastMsg.receiver._id,
-              receiverName: lastMsg.receiver.name!== sendername ? lastMsg.receiver.name : lastMsg.sender.name,
-              senderName: lastMsg.sender.name=== sendername ? lastMsg.sender.name : lastMsg.receiver.name
-            });
-          }
+            
         } catch (error) {
           
             console.error("Error fetching messages:", error.error, error.message, error.status);

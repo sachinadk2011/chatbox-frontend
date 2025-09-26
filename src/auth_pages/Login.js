@@ -1,12 +1,13 @@
 import {useState, useContext} from 'react'
 import { useNavigate } from "react-router";
 import UserContext from '../context/users/UserContext';
+import SetAuthToken from '../utils/SetAuthToken';
 
 
 
 const Login = () => {
   let navigate = useNavigate();
-  const {login, getUser} = useContext(UserContext);
+  const {login, getUser, setUser} = useContext(UserContext);
     const [credential, setCredential] = useState({
       email: "",
       password: "",
@@ -30,22 +31,28 @@ const Login = () => {
       } 
         console.log("json.message: ", json.message ,json.token);
         localStorage.setItem("token", json.token);
+        SetAuthToken(json.token);
         
         
         const userdata = await getUser();
+        console.log("userdata: ", userdata);
         if (!userdata.success) {
+          console.log("userdata error: ", userdata.message);
           throw new Error(userdata.message);
         }
+        console.log("About to save user");
         localStorage.setItem("user", JSON.stringify(userdata.user));
+
         console.log("user: ", localStorage.getItem("user"));
-        // setUser(json.user);
+        console.log("About to setUser");
+        setUser(userdata.user);
         navigate("/");
     } catch (error) {
       setCredential({
           email: "",
           password: "" 
                });
-      console.error("Error logging in:", error);
+      console.error("Error logging in:", error.error || error.message );
     }
     }
   
