@@ -1,7 +1,8 @@
 import MessageContext from "./MessageContext";
-import React, { useState, useCallback, useContext } from 'react';
+import React, { useState, useCallback, useContext, useEffect } from 'react';
 import axios from 'axios';
-import UserContext from "../users/UserContext"; 
+import UserContext from "../users/UserContext";
+import socket from "../../server/socket"; 
 
 export const MessageState = (props) => {
     axios.defaults.baseURL = process.env.REACT_APP_URL;
@@ -18,6 +19,25 @@ export const MessageState = (props) => {
         senderName: " " 
       });
 
+      // inside component or hook:
+useEffect(() => {
+  socket.on("receiveMessage", (msg) => {
+    console.log("Received via socket:", msg);
+    setMessages(prev => [...prev, msg]);
+  });
+  return () => {
+    socket.off("receiveMessage");
+  };
+}, []);
+
+useEffect(() => {
+  if (user?.id) {
+    socket.emit("joinRoom", user.id);
+  }
+}, [user?.id]);
+
+
+
     // fetch all messages
     const fetchMessages = useCallback(async () => {
         try {
@@ -25,12 +45,13 @@ export const MessageState = (props) => {
            
             const msg = response.data.messages;
             setMessages(msg);
-            console.log(msg);
+            console.log("Fetched messages:", response.data.message);
+            return response.data;
             
         } catch (error) {
           
-            console.error("Error fetching messages:", error.error, error.message, error.status);
-            return error.status;
+            console.error("Error fetching messages:",  error.message, error.status);
+            throw error.response?.data || { success: false, message: error.message || "Something went wrong" };
         }
     }, []);
 
@@ -43,7 +64,11 @@ export const MessageState = (props) => {
             }
             console.log("Message sent:", response.data);
             setMessages(prevMessages => [...prevMessages, response.data.message]);
-            console.log(messages, response.data, response.data.message);
+            console.log(messages);
+            console.log("socket in sendmessage: ", response.data.message);
+
+            socket.emit("sendMessage", response.data.message);
+
             return response.data;
           } catch (error) {
           console.error("Error sending message:", error, error.error, error.message);

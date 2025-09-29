@@ -15,16 +15,18 @@ import { FriendsState } from './context/friends/FriendsState';
 import UserContext from './context/users/UserContext';
 import setupAxiosInterceptors from './utils/SetupAxiosInterceptors';
 import SetAuthToken from './utils/SetAuthToken';
+import socket from './server/socket';
+import MessageContext from './context/message/MessageContext';
 
 
 
 function AppContent() {
+  console.log("AppContent rendered: ", socket);
   let navigate = useNavigate();
-   const { getUser, setUser } = useContext(UserContext);
+   const { getUser, setUser, user } = useContext(UserContext);
+    
 
-   useEffect(() => {
-  setupAxiosInterceptors(navigate);
-}, []);
+   
 
   useEffect(() => {
    const token = localStorage.getItem("token");
@@ -35,7 +37,8 @@ function AppContent() {
   const fetchUser = async () => {
     try {
       const userData = await getUser();
-      if (userData) {
+      if (userData.success) {
+        navigate("/");
         console.log("userData: ", userData);
         setUser({
           name: userData.user.name,

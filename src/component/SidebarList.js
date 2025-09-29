@@ -18,10 +18,17 @@ const SidebarList = () => {
     const length = messages.length;
 
     useEffect( () => {
-    const fetchdata = async()=>{
+      const fetchdata = async()=>{
+      try{
       await fetchFriends();
     await fetchMessages();
-
+    console.log("sidebarlist useeffect: ", await fetchMessages());
+  }catch(error){
+    console.error("Error in sidebarlist useeffect:", error);
+    if (!error.success){
+      navigate("/login");
+    }
+  }
     }
     fetchdata();
 
