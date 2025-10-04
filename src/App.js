@@ -38,23 +38,27 @@ function AppContent() {
     try {
       const userData = await getUser();
       if (userData.success) {
-        
         console.log("userData: ", userData);
         setUser({
           name: userData.user.name,
           email: userData.user.email,
           id: userData.user.id,
         });
+        navigate("/");
       }
     } catch (error) {
-      if (error.status === 401) {
+      // Check explicitly for 401
+    if (error.response && error.response.status === 401) {
       console.log("Token expired or invalid, logging out");
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       SetAuthToken(null);
       navigate("/login");
-      }
+    } else {
+      console.log("Server not reachable or other error:", error);
+      // Don't log out, keep user on current page or show error
     }
+  }
   };
 
   fetchUser();
