@@ -20,7 +20,7 @@ const MessageBox = () => {
 
     return(
         <>
-        {messages.filter(e => user.id === e.receiver._id || user.id === e.sender._id).map(e=>{
+        {[...messages] .reverse().filter(e => user.id === e.receiver._id || user.id === e.sender._id).map(e=>{
 
           return(
             <React.Fragment key={e._id}>

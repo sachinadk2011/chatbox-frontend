@@ -5,7 +5,7 @@ const Header = () => {
   const [showSidenav, setShowSidenav] = useState(false);
 
   return (
-    <header className="relative bg-gradient-to-br from-lime-300 to-green-500 p-4 flex items-center justify-between">
+    <header className="relative top-11 h-28 mb-12 bg-gradient-to-br from-lime-300 to-green-500 p-4 flex items-center justify-between">
       {/* Menu Button - visible on all screen sizes now */}
       
       <div >

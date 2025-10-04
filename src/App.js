@@ -38,7 +38,7 @@ function AppContent() {
     try {
       const userData = await getUser();
       if (userData.success) {
-        navigate("/");
+        
         console.log("userData: ", userData);
         setUser({
           name: userData.user.name,
@@ -47,10 +47,13 @@ function AppContent() {
         });
       }
     } catch (error) {
+      if (error.status === 401) {
       console.log("Token expired or invalid, logging out");
       localStorage.removeItem("token");
+      localStorage.removeItem("user");
       SetAuthToken(null);
       navigate("/login");
+      }
     }
   };
 

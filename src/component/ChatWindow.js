@@ -36,18 +36,18 @@ const ChatWindow = () => {
         <>
        
 <div className="flex-1 p:2 sm:p-6 justify-between flex flex-col h-screen">
-   <div className="flex sm:items-center justify-between py-3 border-b-2 border-gray-200">
+   <div className="flex sm:items-center relative top-7 mb-8 justify-between py-3 border-b-2 border-gray-200">
       <ProfileHeader />
    </div>
 
-   <div id="messages" className="flex flex-col space-y-4 p-3 overflow-y-auto scrollbar-thumb-blue scrollbar-thumb-rounded scrollbar-track-blue-lighter scrollbar-w-2 scrolling-touch">
+   <div id="messages" className="flex  flex-col-reverse gap-1 p-3 overflow-y-auto scrollbar-thumb-blue scrollbar-thumb-rounded scrollbar-track-blue-lighter scrollbar-w-2 scrolling-touch ">
       <MessageBox />
       
             
       
      
    </div>
-   <div className="border-t-2 border-gray-200 px-4 pt-4 mb-2 sm:mb-0">
+   <div className="border-t-2 relative -bottom-10  border-gray-200 px-4 pt-4 mb-2 sm:mb-0">
       <form onSubmit={SendMessage} >
       <div className="relative flex">
          <span className="absolute inset-y-0 flex items-center">
