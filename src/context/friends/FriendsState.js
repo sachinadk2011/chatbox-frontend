@@ -16,8 +16,8 @@ export const FriendsState = (props) => {
         
             setFriends(response.data);
         } catch (error) {
-            return error
             console.error("Error fetching friends:", error);
+            return error;
         }
     }, []);
 
@@ -62,7 +62,7 @@ export const FriendsState = (props) => {
     };
 
     return (
-    <FriendsContext.Provider value={{ friends, fetchFriends, fetchReceivedRequests, receivedFriendRequest, fetchSentRequests, sendFriendRequest }}>
+    <FriendsContext.Provider value={{ friends, setFriends, fetchFriends, fetchReceivedRequests, receivedFriendRequest, fetchSentRequests, sendFriendRequest }}>
       {props.children}
     </FriendsContext.Provider>
   );

@@ -2,6 +2,7 @@ import React from 'react';
 import ChatWindow from '../component/ChatWindow';
 import SidebarList from '../component/SidebarList';
 import MessageContext from '../context/message/MessageContext';
+import Header from '../component/Header';
 
 /* this is home page where people list and one of people chat is open
 sidebarlist act as list of people name with certain message
@@ -13,7 +14,10 @@ const ChatRoom = () => {
     return(
         <>
         <div className="bg-gray-100 flex justify-center items-center ">
+            <div className="w-1/4 bg-white border-r border-gray-300">
+            <Header />
         <SidebarList />
+        </div>
         <div className="w-full relative -top-20">
         {Selecteduser.receiverId ? <ChatWindow /> :
          <div className="text-gray-500 flex absolute  left-1/3">Select a user to start chatting</div>}

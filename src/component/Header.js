@@ -1,5 +1,7 @@
 // Header.jsx
 import React, { useState } from 'react';
+import FriendList from './friends/FriendList';
+import { Link } from 'react-router-dom';
 
 const Header = () => {
   const [showSidenav, setShowSidenav] = useState(false);
@@ -73,8 +75,11 @@ const Header = () => {
           </button>
         </div>
         <ul className="space-y-4">
-          <li className="hover:bg-slate-700 rounded px-3 py-2 cursor-pointer">Friends</li>
-          <li className="hover:bg-slate-700 rounded px-3 py-2 cursor-pointer">Suggestions</li>
+          <li className="hover:bg-slate-700 rounded px-3 py-2 cursor-pointer" onClick={()=>setShowSidenav(false)}>
+            <Link to="/friends"> Friends</Link>
+            </li>
+          <li className="hover:bg-slate-700 rounded px-3 py-2 cursor-pointer">
+            Suggestions</li>
           <li className="hover:bg-slate-700 rounded px-3 py-2 cursor-pointer">Friend Requests</li>
           <li className="hover:bg-slate-700 rounded px-3 py-2 cursor-pointer">Sent Requests</li>
         </ul>

@@ -1,6 +1,5 @@
 import React, {useContext, useEffect} from 'react'
 import ChatList from './ChatList';
-import Header from './Header';
 import MessageContext from '../context/message/MessageContext';
 import FriendsContext from '../context/friends/FriendsContext';
 import { useNavigate } from "react-router";
@@ -64,12 +63,6 @@ const SidebarList = () => {
     
     return(
         <>
-        
-        <div className="w-1/4 bg-white border-r border-gray-300">
-          
-          <Header />
-        
-         
           <div className="overflow-y-auto h-screen p-3 mb-9 pb-20"  >
           {friends.map((element)=>{
             return(
@@ -79,7 +72,7 @@ const SidebarList = () => {
             </div>
         )})}
         </div> 
-        </div>
+        
         </>
     )
 }

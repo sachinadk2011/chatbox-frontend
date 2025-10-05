@@ -8,7 +8,7 @@ import {
   useNavigate
 } from "react-router-dom";
 import SignUp from './auth_pages/SignUp';
-import ChatRoom from './auth_pages/ChatRoom';
+import ChatRoom from './pages/ChatRoom';
 import { UserState } from './context/users/UserState';
 import { MessageState } from './context/message/MessageState';
 import { FriendsState } from './context/friends/FriendsState';
@@ -17,6 +17,7 @@ import setupAxiosInterceptors from './utils/SetupAxiosInterceptors';
 import SetAuthToken from './utils/SetAuthToken';
 import socket from './server/socket';
 import MessageContext from './context/message/MessageContext';
+import FrdConnection from './pages/FrdConnection';
 
 
 
@@ -70,6 +71,7 @@ function AppContent() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/" element={<ChatRoom />} />
+        <Route path="/friends" element={<FrdConnection />} />
       </Routes>
    
     
