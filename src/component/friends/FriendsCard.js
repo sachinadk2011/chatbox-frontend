@@ -1,6 +1,48 @@
 import React from 'react'
+import FriendsContext from '../../context/friends/FriendsContext';
+import { useLocation } from 'react-router-dom';
 
-const FriendsCard = ({name, mutualFriends}) => {
+const FriendsCard = ({id, name, mutualFriends=0, friendlen=0}) => {
+  const { sendFriendRequest, setPeople, receivedFriendRequest, setReceivedFrdReq } = React.useContext(FriendsContext);
+  let location = useLocation();
+  const path = location.pathname;
+  
+  const Accept = async()=>{
+    try{
+      const json = await receivedFriendRequest(id, "accept");
+      console.log("Accept friend response: ", id, json);
+      setReceivedFrdReq(prevRequests => prevRequests.filter(request => request._id !== id));
+    }catch(error){
+      console.error("Error accepting friend request:", error);
+    }
+  }
+  const Reject = async()=>{
+    try{
+      const json = await receivedFriendRequest(id, "reject");
+      console.log("Reject friend response: ", id, json);
+      setReceivedFrdReq(prevRequests => prevRequests.filter(request => request._id !== id));
+
+    }catch(error){
+      console.error("Error rejecting friend request:", error);
+    }
+  }
+
+  const AddingFrd = async()=>{
+    try {
+      const json = await sendFriendRequest(id);
+      console.log("Add friend response: ", json);
+     
+        setPeople(prevPeople => prevPeople.filter(person => person._id !== id));
+      
+
+      
+    } catch (error) {
+      console.error("Error adding friend:", error);
+      
+    }
+
+  }
+
     return (
         <>
         {/* <div className="w-1/5 ">
@@ -55,13 +97,24 @@ const FriendsCard = ({name, mutualFriends}) => {
           <strong>{mutualFriends}</strong> Mutual Friends
         </span>
         <span>
-          <strong>{Math.floor(Math.random() * 2000)}</strong> Friends
+          <strong>{friendlen}</strong> Friends
         </span>
       </div>
 
-      <button className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-full font-medium transition">
+      <button onClick={() => AddingFrd()} className={`w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-full  font-medium transition  ${path === '/friends/add-friend' ? 'visible' : 'hidden'}`}>
         Add Friend
       </button>
+      
+      <div className={`flex flex-row gap-2 ${path === '/friends/received-requests' ? 'visible' : 'hidden'}`}>
+      <button onClick={() => Accept()} className={`w-1/2 bg-blue-500 inline  hover:bg-blue-600 text-white py-2 px-4 rounded-full font-medium transition `}>
+        Accept
+      </button>
+      <button onClick={() => Reject()} className={`w-1/2  bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-full font-medium transition `}>
+        Reject
+      </button>
+
+      </div>
+
     </div>
 
     </>

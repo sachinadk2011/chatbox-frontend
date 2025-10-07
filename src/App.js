@@ -23,6 +23,7 @@ import FrdConnection from './pages/FrdConnection';
 import FriendList from './component/friends/FriendList';
 import SuggestionsFriend from './component/friends/SuggestionFriend';
 import Navbar from './component/Navbar';
+import ReceivedReq from './component/friends/ReceivedReq'; 
 
 
 
@@ -93,6 +94,10 @@ function AppContent() {
           <Route
             path="/friends/add-friend"
             element={<ProtectedRoute element={<SuggestionsFriend />} />}
+          />
+          <Route
+            path="/friends/received-requests"
+            element={<ProtectedRoute element={<ReceivedReq />} />}
           />
         </Routes>
       </div>

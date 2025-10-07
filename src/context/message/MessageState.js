@@ -51,7 +51,7 @@ useEffect(() => {
         } catch (error) {
           
             console.error("Error fetching messages:",  error.message, error.status);
-            throw error.response?.data || { success: false, message: error.message || "Something went wrong" };
+            throw error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" };
         }
     }, []);
 
@@ -72,7 +72,7 @@ useEffect(() => {
             return response.data;
           } catch (error) {
           console.error("Error sending message:", error, error.error, error.message);
-          return error.response?.data || { success: false, message: error.message || "Something went wrong" };
+         throw error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" };
         }
     };
 
@@ -83,6 +83,7 @@ useEffect(() => {
 
         } catch (error) {
             console.error("Error marking message as read:", error);
+            throw error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" };
         }
     }; 
 

@@ -3,15 +3,19 @@ import UserContext from '../context/users/UserContext';
 import { ReceivedMsg } from './ReceivedMsg';
 import { SendMsg } from './SendMsg';
 import MessageContext from '../context/message/MessageContext';
-import socket from '../server/socket';
+
 
 const MessageBox = () => {
-    const { messages, fetchMessages, setMessages } = useContext(MessageContext);
+    const { messages, fetchMessages } = useContext(MessageContext);
     const { user } = useContext(UserContext);
 
     useEffect(() => {
       const fetchMessagedata = async()=>{
-        await fetchMessages();
+        try{
+          await fetchMessages();
+        }catch(error){
+          console.error("Error fetching messages in MessageBox:", error);
+        }
       }
       fetchMessagedata();
     }, [fetchMessages]);
@@ -20,7 +24,7 @@ const MessageBox = () => {
 
     return(
         <>
-        {[...messages] .reverse().filter(e => user.id === e.receiver._id || user.id === e.sender._id).map(e=>{
+        {[...messages].reverse().filter(e => user.id === e.receiver._id || user.id === e.sender._id).map(e=>{
 
           return(
             <React.Fragment key={e._id}>

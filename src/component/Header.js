@@ -1,10 +1,9 @@
 // Header.jsx
-import React, { useState } from 'react';
-import FriendList from './friends/FriendList';
-import { Link } from 'react-router-dom';
+import React from 'react';
+
 
 const Header = () => {
-  const [showSidenav, setShowSidenav] = useState(false);
+  
 
   return (
     <header className=" bg-gradient-to-br from-lime-300 to-green-500 p-4 flex items-center justify-between">

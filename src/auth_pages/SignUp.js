@@ -1,10 +1,10 @@
 import React, { useContext, useState } from 'react'
 import UserContext from '../context/users/UserContext';
-import { Link, useNavigate } from 'react-router-dom';
+import {  useNavigate } from 'react-router-dom';
 
 
 const SignUp = () => {
-  const {signup, getUser} = useContext(UserContext);
+  const {signup, getUser, setUser} = useContext(UserContext);
   const [credential, setCredential] = useState({
     email: "",
     password: "",
@@ -34,10 +34,9 @@ const SignUp = () => {
       console.log(json.message);
       localStorage.setItem("token", json.token);
       const userdata = await getUser();
-      if (!userdata.success) {
-        throw new Error(userdata.message);
-      }
+      
       localStorage.setItem("user", JSON.stringify(userdata.user));
+      setUser(userdata.user);
       navigate("/");
     } catch (error) {
       console.error("Error signing up:", error);

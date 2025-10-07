@@ -1,10 +1,9 @@
-import React, {useContext, useEffect} from 'react';
+import React from 'react';
 import '../App.css';
 import ProfileHeader from './ProfileHeader';
 import MessageBox from './MessageBox';
 import MessageContext from '../context/message/MessageContext';
-import socket from '../server/socket';
-import SocketListeners from '../server/SocketListeners';
+
 
 const ChatWindow = () => {
    const {sendMessage,Selecteduser} = React.useContext(MessageContext);
@@ -19,13 +18,15 @@ const ChatWindow = () => {
       e.preventDefault();
       const message = e.target.elements.message.value;
       const receiver = Selecteduser.receiverId;
-
+try{
      const json = await sendMessage(message, receiver);
      console.log("send message "+JSON.stringify(json));
-
+     e.target.reset();
+}catch(error){
+  console.error("Error sending message:", error);
+}
      
      
-      e.target.reset();
       
     
   

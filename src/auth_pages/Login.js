@@ -35,12 +35,7 @@ const Login = () => {
         
         
         const userdata = await getUser();
-        console.log("userdata: ", userdata);
-        if (!userdata.success) {
-          console.log("userdata error: ", userdata.message);
-          throw new Error(userdata.message);
-        }
-        console.log("About to save user");
+        
         localStorage.setItem("user", JSON.stringify(userdata.user));
 
         console.log("user: ", localStorage.getItem("user"));
@@ -52,7 +47,7 @@ const Login = () => {
           email: "",
           password: "" 
                });
-      console.error("Error logging in:", error.error || error.message );
+      console.error("Error logging in:", error );
     }
     }
   
