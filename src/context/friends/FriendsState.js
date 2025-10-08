@@ -17,7 +17,8 @@ export const FriendsState = (props) => {
         try {
             const response = await axios.get('/api/friends/fetchallfriends');
         
-            setFriends(response.data.friends);
+            
+            return response.data.friends;
         } catch (error) {
             console.error("Error fetching friends:", error);
             throw error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" };

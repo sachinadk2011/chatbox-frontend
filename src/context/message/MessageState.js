@@ -19,6 +19,8 @@ export const MessageState = (props) => {
         senderName: " " 
       });
 
+      
+
       // inside component or hook:
 useEffect(() => {
   socket.on("receiveMessage", (msg) => {
@@ -44,9 +46,8 @@ useEffect(() => {
             const response = await axios.get('/api/messages/fetchallmessages');
            
             const msg = response.data.messages;
-            setMessages(msg);
-            console.log("Fetched messages:", response.data.message);
-            return response.data;
+           
+            return msg;
             
         } catch (error) {
           
@@ -62,14 +63,11 @@ useEffect(() => {
             if (!response.data.success) {
               throw new Error(response.data.error || 'Message sending failed');
             }
-            console.log("Message sent:", response.data);
-            setMessages(prevMessages => [...prevMessages, response.data.message]);
-            console.log(messages);
-            console.log("socket in sendmessage: ", response.data.message);
+           
 
             socket.emit("sendMessage", response.data.message);
 
-            return response.data;
+            return response.data.message;
           } catch (error) {
           console.error("Error sending message:", error, error.error, error.message);
          throw error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" };

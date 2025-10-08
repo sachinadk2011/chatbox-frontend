@@ -6,25 +6,20 @@ import MessageContext from '../context/message/MessageContext';
 
 
 const MessageBox = () => {
-    const { messages, fetchMessages } = useContext(MessageContext);
+    const { messages, fetchMessages, Selecteduser } = useContext(MessageContext);
     const { user } = useContext(UserContext);
+    console.log("messagebox selecteduser: ", Selecteduser);
+    console.log("messagebox messages: ", messages);
+    console.log("messagebox user: ", user);
 
-    useEffect(() => {
-      const fetchMessagedata = async()=>{
-        try{
-          await fetchMessages();
-        }catch(error){
-          console.error("Error fetching messages in MessageBox:", error);
-        }
-      }
-      fetchMessagedata();
-    }, [fetchMessages]);
+    
+    
     
     
 
     return(
         <>
-        {[...messages].reverse().filter(e => user.id === e.receiver._id || user.id === e.sender._id).map(e=>{
+        {messages.find(e => e.otherUserId === Selecteduser.receiverId.toString())?.messages.slice().reverse().map(e=>{
 
           return(
             <React.Fragment key={e._id}>
