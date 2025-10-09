@@ -25,7 +25,29 @@ export const MessageState = (props) => {
 useEffect(() => {
   socket.on("receiveMessage", (msg) => {
     console.log("Received via socket:", msg);
-    setMessages(prev => [...prev, msg]);
+    setMessages(prevMessages =>{
+           // determine friend ID safely
+      const frdId = msg.sender?._id === user?.id 
+        ? msg.receiver?._id.toString() 
+        : msg.sender?._id.toString();
+
+  // clone old state
+  let updated = [...prevMessages];
+  
+  // find chat with that friend
+  let existing = updated.find(item => item.otherUserId === frdId);
+
+  if (existing) {
+    if(!existing.messages.some(m => m._id === msg._id)) {
+      existing.messages = [...existing.messages, msg];
+    }
+  } else {
+    // create new chat if not exists
+    updated.push({ otherUserId: frdId, messages: [msg] });
+  }
+
+  return updated;
+});
   });
   return () => {
     socket.off("receiveMessage");
@@ -67,7 +89,7 @@ useEffect(() => {
 
             socket.emit("sendMessage", response.data.message);
 
-            return response.data.message;
+            
           } catch (error) {
           console.error("Error sending message:", error, error.error, error.message);
          throw error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" };

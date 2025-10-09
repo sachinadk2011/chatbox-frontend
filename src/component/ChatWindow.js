@@ -19,27 +19,9 @@ const ChatWindow = () => {
       const message = e.target.elements.message.value;
       const receiver = Selecteduser.receiverId;
 try{
-     const json = await sendMessage(message, receiver);
-     setMessages(prevMessages =>{
-            const frdId = Selecteduser.receiverId.toString();
-  
-  // clone old state
-  let updated = [...prevMessages];
-  
-  // find chat with that friend
-  let existing = updated.find(item => item.otherUserId === frdId);
-
-  if (existing) {
-    // append new message
-    existing.messages = [...existing.messages, json];
-  } else {
-    // create new chat if not exists
-    updated.push({ otherUserId: frdId, messages: [json] });
-  }
-
-  return updated;
-});
-     console.log("send message "+JSON.stringify(json));
+      await sendMessage(message, receiver);
+     
+     
      e.target.reset();
 }catch(error){
   console.error("Error sending message:", error);
