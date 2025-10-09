@@ -62,15 +62,16 @@ export const FriendsState = (props) => {
     };
 
     //fetch all send frd req
-    const fetchSentRequests = async () => {
+    const fetchSentRequests = useCallback(async () => {
         try {
             const response = await axios.get('/api/friends/fetchallsentrequests');
+            setSentFrdReq(response.data.sentRequests);
             return response.data;
         } catch (error) {
             console.error("Error fetching sent friend requests:", error);
             throw error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" };
         }
-    };
+    }, [])
 
     //sent frd req 
     const sendFriendRequest = async (friendId) => {
@@ -83,8 +84,20 @@ export const FriendsState = (props) => {
         }
     };
 
+    //cancel sent frd req
+    const cancelFriendRequest = async (friendId) => {
+        try {
+            const response = await axios.post('/api/friends/cancelsentfriendrequest', { friendId });
+            setSentFrdReq(prevRequests => prevRequests.filter(request => request._id !== friendId));
+            return response.data;
+        } catch (error) {
+            console.error("Error cancelling friend request:", error);
+            throw error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" };
+        }  
+    };                         
+
     return (
-    <FriendsContext.Provider value={{ friends, setFriends, people, setPeople, fetchFriends, suggestionFrds, fetchReceivedRequests, receivedFriendRequest, fetchSentRequests, sendFriendRequest, receivedFrdReq, setReceivedFrdReq, sentFrdReq, setSentFrdReq }}>
+    <FriendsContext.Provider value={{ friends, setFriends, people, setPeople, fetchFriends, suggestionFrds, fetchReceivedRequests, receivedFriendRequest, fetchSentRequests, sendFriendRequest, receivedFrdReq, setReceivedFrdReq, sentFrdReq, setSentFrdReq, cancelFriendRequest }}>
       {props.children}
     </FriendsContext.Provider>
   );

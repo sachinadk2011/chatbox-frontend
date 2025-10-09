@@ -3,9 +3,13 @@ import FriendsContext from '../../context/friends/FriendsContext';
 import { useLocation } from 'react-router-dom';
 
 const FriendsCard = ({id, name, mutualFriends=0, friendlen=0}) => {
-  const { sendFriendRequest, setPeople, receivedFriendRequest, setReceivedFrdReq } = React.useContext(FriendsContext);
+  const { sendFriendRequest,cancelFriendRequest, setPeople, receivedFriendRequest, setReceivedFrdReq } = React.useContext(FriendsContext);
   let location = useLocation();
   const path = location.pathname;
+  const sentPath = "/friends/sent-requests";
+  const receivedPath = "/friends/received-requests";
+  const addFrdPath = "/friends/add-friend";
+
   
   const Accept = async()=>{
     try{
@@ -16,6 +20,17 @@ const FriendsCard = ({id, name, mutualFriends=0, friendlen=0}) => {
       console.error("Error accepting friend request:", error);
     }
   }
+
+  const CancelReq = async()=>{
+    try{
+      const json = await cancelFriendRequest(id);
+      console.log("Cancel friend response: ", id, json);
+      
+    }catch(error){
+      console.error("Error cancelling friend request:", error);
+    }
+  }
+
   const Reject = async()=>{
     try{
       const json = await receivedFriendRequest(id, "reject");
@@ -101,11 +116,11 @@ const FriendsCard = ({id, name, mutualFriends=0, friendlen=0}) => {
         </span>
       </div>
 
-      <button onClick={() => AddingFrd()} className={`w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-full  font-medium transition  ${path === '/friends/add-friend' ? 'visible' : 'hidden'}`}>
-        Add Friend
+      <button onClick={() => path === addFrdPath? AddingFrd(): CancelReq()} className={`w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-full  font-medium transition  ${path === addFrdPath || path === sentPath ? 'visible' : 'hidden'}`}>
+        {path === addFrdPath ? 'Add Friend' : 'Cancel Request'}
       </button>
       
-      <div className={`flex flex-row gap-2 ${path === '/friends/received-requests' ? 'visible' : 'hidden'}`}>
+      <div className={`flex flex-row gap-2 ${ path === receivedPath  ? 'visible' : 'hidden'}`}>
       <button onClick={() => Accept()} className={`w-1/2 bg-blue-500 inline  hover:bg-blue-600 text-white py-2 px-4 rounded-full font-medium transition `}>
         Accept
       </button>

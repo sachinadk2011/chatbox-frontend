@@ -24,6 +24,7 @@ import FriendList from './component/friends/FriendList';
 import SuggestionsFriend from './component/friends/SuggestionFriend';
 import Navbar from './component/Navbar';
 import ReceivedReq from './component/friends/ReceivedReq'; 
+import SentfrdReq from './component/friends/SentfrdReq';
 
 
 
@@ -98,6 +99,10 @@ function AppContent() {
           <Route
             path="/friends/received-requests"
             element={<ProtectedRoute element={<ReceivedReq />} />}
+          />
+          <Route
+            path="/friends/sent-requests"
+            element={<ProtectedRoute element={<SentfrdReq />} />}
           />
         </Routes>
       </div>
