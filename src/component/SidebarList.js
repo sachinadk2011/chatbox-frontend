@@ -70,7 +70,7 @@ const SidebarList = () => {
     const isYou = lastMessage.sender._id === user?.id;
 
     // Use .message field (text), not the whole object
-    previewText = (isYou ? "You: " : "") + lastMessage.message.slice(0, 20);
+    previewText = (isYou ? "You: " : "") + (lastMessage.message.length < 20 ? lastMessage.message : lastMessage.message.slice(0, 20) + '...');
   }
 
   return {
@@ -109,7 +109,7 @@ const SidebarList = () => {
             return(
             <div key={element._id} className="flex items-center mb-4 cursor-pointer hover:bg-gray-100 p-2 rounded-md">
               <ChatList  name={element.name} message={lastMsg.find(msg=> msg.frdId === element._id)?.message}
-              onClick={()=>DisplayChat(element)} />
+              onClick={()=>DisplayChat(element)} mutualfrdlen={element.mutualfrdlen} frdlen={element.friends.length} />
             </div>
         )})}
         </div> 

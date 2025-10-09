@@ -55,9 +55,12 @@ useEffect(() => {
 }, []);
 
 useEffect(() => {
-  if (user?.id) {
+  socket.on("connect", () => {
+  const token = localStorage.getItem("token");
+  if (token && user?.id) {
     socket.emit("joinRoom", user.id);
   }
+});
 }, [user?.id]);
 
 
