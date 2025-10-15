@@ -1,23 +1,27 @@
 import React from 'react'
-import { Link, useLocation } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 
 const Navbar = () => {
   const location = useLocation();
   
 
-  /* const showSuggestion = async () => {
-    await suggestionFrds();
-  }
- */
+  const colorMap = {
+  blue: "hover:fill-blue-500 hover:stroke-blue-500",
+  red: "hover:fill-red-500 hover:stroke-red-500",
+  yellow: "hover:fill-yellow-500 hover:stroke-yellow-500",
+  green: "fill-green-500 stroke-green-500",
+};
+
   // Common icon container
   const IconWrapper = ({ children, tooltip, hoverColor = 'blue', path="/"  }) => (
     <div className="relative group inline-block">
-      <div  className={`transition-colors duration-200 fill-green-500  stroke-green-500  hover:fill-${hoverColor}-500 hover:stroke-${hoverColor}-500  rounded-lg cursor-pointer`}>
-        <Link className={`nav-link ${location.pathname ===`${path}` ? `active : fill-black active: stroke-black  hover:fill-${hoverColor}-500 hover:stroke-${hoverColor}-500` : ""}`}
+      <div  className={`transition-colors duration-200 ${colorMap["green"]}  rounded-lg cursor-pointer`}>
+        <NavLink className={({isActive})=>
+         `nav-link  ${colorMap[hoverColor]} ${isActive ? `active: fill-black active: stroke-black ` : ""}`}
         aria-current="page"
                   to={`${path}`}>
         {children}
-        </Link>
+        </NavLink>
       </div>
 
       {/* Tooltip */}
