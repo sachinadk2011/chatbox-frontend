@@ -23,7 +23,7 @@ const MessageBox = () => {
 
           return(
             <React.Fragment key={e._id}>
-            {e.receiver._id === user.id? <ReceivedMsg  received={e.message} /> : <SendMsg send={e.message} />}
+            {e.receiver._id === user.id? <ReceivedMsg types={e.types}  received={e.message} /> : <SendMsg types={e.types} send={e.message} />}
 
             </React.Fragment>
           )

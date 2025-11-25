@@ -82,9 +82,10 @@ useEffect(() => {
     }, []);
 
     //send a message
-    const sendMessage = async (message, receiver) => {
+    const sendMessage = async (formData) => {
         try {
-            const response = await axios.post('/api/messages/sendmessage', { message, receiver });
+            const response = await axios.post('/api/messages/sendmessage', formData
+            );
             if (!response.data.success) {
               throw new Error(response.data.error || 'Message sending failed');
             }
