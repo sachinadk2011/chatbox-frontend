@@ -1,13 +1,16 @@
-import {useState, useContext} from 'react'
+import {useState, useContext, useRef} from 'react'
 import { useNavigate } from "react-router";
 import UserContext from '../context/users/UserContext';
 import SetAuthToken from '../utils/SetAuthToken';
+import { GoogleLogin  } from '@react-oauth/google';
+import { FcGoogle } from "react-icons/fc"; // Google icon
 
 
 
 const Login = () => {
   let navigate = useNavigate();
   const {login, getUser, setUser} = useContext(UserContext);
+  const googleref =  useRef(null);
     const [credential, setCredential] = useState({
       email: "",
       password: "",
@@ -18,6 +21,17 @@ const Login = () => {
      const ochange = (e) => {
     setCredential({ ...credential, [e.target.name]: e.target.value });
   };
+
+  
+  const handleGoogleSuccess = (credentialResponse) => {
+    console.log("JWT Token:", credentialResponse);
+    // You can send credentialResponse.credential to backend to verify JWT
+  };
+
+  const handleGoogleError = () => {
+    console.log("Login Failed");
+  };
+  
   
   const handleSubmit = async(event) => {
     event.preventDefault();
@@ -54,7 +68,7 @@ const Login = () => {
 
   return (
     <>
-       <div className="bg-gray-100 flex justify-center items-center h-screen">
+       <div className="bg-gray-100 flex justify-center items-center h-screen ">
     
 <div className="w-1/2 h-screen hidden lg:block">
   <img src="https://placehold.co/800x/667fff/ffffff.png?text=Your+Image&font=Montserrat" alt="Placeholder" className="object-cover w-full h-full" />
@@ -87,7 +101,24 @@ const Login = () => {
     
     <button type="submit" className="bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-md py-2 px-4 w-full" >Login</button>
   </form>
-  
+  <div className="mt-4 text-center text-gray-600">
+    OR
+  </div>
+  <div className="mt-4 flex justify-center">
+     
+        <GoogleLogin
+        
+          onSuccess={handleGoogleSuccess}
+          onError={handleGoogleError}
+          type="icon"
+          
+          
+        />
+      </div>
+      
+      
+
+    
   <div className="mt-6 text-blue-500 text-center">
     <a href="/signup" className="hover:underline">Sign up Here</a>
   </div>
