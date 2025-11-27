@@ -60,6 +60,18 @@ export const UserState = (props) => {
 }
   }
 
+// login/signup with google
+const googleLogin = async(token)=>{
+  try {
+    const response = await axios.post('/api/auth/googlelogin', { token });
+    console.log("google login response: ", response.data);
+
+    return response.data;
+  } catch (error) {
+    throw error.response?.data.error || error.response?.data.message || { success: false, message: error.error || "Something went wrong" };
+  } 
+}
+
   // gets user
   const getUser = async()=>{
     try {
@@ -72,7 +84,11 @@ export const UserState = (props) => {
       setUser({
       name: response.data.user.name,
       email: response.data.user.email,
-      id: response.data.user.id
+      id: response.data.user.id,
+      onlineStatus: response.data.user.onlineStatus,
+      lastActive: response.data.user.lastActive,
+      profile_url: response.data.user.profile_Url,
+      public_id: response.data.user.public_id
     });
     console.log("getUser response:", response.data);
       
@@ -85,7 +101,7 @@ export const UserState = (props) => {
 }
 
   return (
-    <UserContext.Provider value={{ login, signup, getUser, user, setUser }}>
+    <UserContext.Provider value={{ login, signup, getUser, user, setUser, googleLogin }}>
       {props.children}
     </UserContext.Provider>
   );

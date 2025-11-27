@@ -1,4 +1,4 @@
-import React, {useEffect, useContext} from 'react';
+import React, {useEffect, useContext, useEffectEvent, useState} from 'react';
 import './App.css';
 import Login from './auth_pages/Login';
 import {
@@ -40,23 +40,29 @@ function AppContent() {
    const location = useLocation();
     
    const hideSidebar = location.pathname === "/login" || location.pathname === "/signup";
+   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
-  useEffect(() => {
-   const token = localStorage.getItem("token");
+   const fetchUser = useEffectEvent( async () => {
+    const token = localStorage.getItem("token");
   if (!token) return; // no token, let user be null
 
   SetAuthToken(token); // attach token globally
-
-  const fetchUser = async () => {
+console.log("Fetching user with token:", token);
+  
     try {
       const userData = await getUser();
       if (userData.success) {
         console.log("userData: ", userData);
+
         setUser({
-          name: userData.user.name,
-          email: userData.user.email,
-          id: userData.user.id,
-        });
+      name: userData.user.name,
+      email: userData.user.email,
+      id: userData.user.id,
+      onlineStatus: userData.user.onlineStatus,
+      lastActive: userData.user.lastActive,
+      profile_url: userData.user.profile_Url,
+      public_id: userData.user.public_id
+    });
         
       }
     } catch (error) {
@@ -67,14 +73,32 @@ function AppContent() {
       localStorage.removeItem("user");
       SetAuthToken(null);
       navigate("/login");
-    } else {
-      console.log("Server not reachable or other error:", error);
-      // Don't log out, keep user on current page or show error
-    }
+    } else if (error.request && !error.response) {
+    // Network error (no response from server)
+    console.log("Network error: server not reachable or offline", error.message);
+    // Set a state to show network error banner
+  } else {
+    console.log("Other error:", error.message);
   }
+  }});
+
+  useEffect(() => {
+  
+  const goOffline = () => {
+    console.log("Network error: server not reachable or offline");
+    setIsOnline(false)};
+  const goOnline = () => {
+    setIsOnline(true);
+    fetchUser(); // fetch user data once back online
   };
 
-  fetchUser();
+  window.addEventListener("offline", goOffline);
+  window.addEventListener("online", goOnline);
+
+  return () => {
+    window.removeEventListener("offline", goOffline);
+    window.removeEventListener("online", goOnline);
+  };
   }, []);
   return (
    <>

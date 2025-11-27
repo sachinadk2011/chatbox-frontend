@@ -4,13 +4,14 @@ import UserContext from '../context/users/UserContext';
 import SetAuthToken from '../utils/SetAuthToken';
 import { GoogleLogin  } from '@react-oauth/google';
 import { FcGoogle } from "react-icons/fc"; // Google icon
+import { decodeJwt } from 'jose';
 
 
 
 const Login = () => {
   let navigate = useNavigate();
-  const {login, getUser, setUser} = useContext(UserContext);
-  const googleref =  useRef(null);
+  const {login, getUser, setUser, googleLogin} = useContext(UserContext);
+  
     const [credential, setCredential] = useState({
       email: "",
       password: "",
@@ -23,13 +24,44 @@ const Login = () => {
   };
 
   
-  const handleGoogleSuccess = (credentialResponse) => {
+  const handleGoogleSuccess = async (credentialResponse) => {
     console.log("JWT Token:", credentialResponse);
+    const {credential} = credentialResponse;
+    const payload = credential ? decodeJwt(credential) : null;
+    console.log("Decoded JWT Payload:", payload);
+    if (payload) {
+      const email = payload.email;
+      console.log("User Email from Google JWT:", email);
+      // You can implement further logic here, such as checking if the user exists in your database
+      // and logging them in or creating a new account.
+    }
+    try {
+      const json = await googleLogin(credential);
+      console.log("json: ", json, json.success);
+      
+     
+        console.log("json.message: ", json.message ,json.token);
+        localStorage.setItem("token", json.token);
+        SetAuthToken(json.token);
+        
+        
+        const userdata = await getUser();
+        
+        localStorage.setItem("user", JSON.stringify(userdata.user));
+
+        console.log("user: ", localStorage.getItem("user"));
+        console.log("About to setUser");
+        setUser(userdata.user);
+        navigate("/");
+    } catch (error) {
+      
+      console.error("Error logging in:", error );
+    }
     // You can send credentialResponse.credential to backend to verify JWT
   };
 
-  const handleGoogleError = () => {
-    console.log("Login Failed");
+  const handleGoogleError = (error) => {
+    console.log("Login Failed", error);
   };
   
   

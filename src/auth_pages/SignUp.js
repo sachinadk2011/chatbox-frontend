@@ -3,10 +3,12 @@ import UserContext from '../context/users/UserContext';
 import {  useNavigate } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { FcGoogle } from "react-icons/fc"; // Google icon
+import { decodeJwt } from 'jose';
+import SetAuthToken from '../utils/SetAuthToken';
 
 
 const SignUp = () => {
-  const {signup, getUser, setUser} = useContext(UserContext);
+  const {signup, getUser, setUser, googleLogin} = useContext(UserContext);
   const [credential, setCredential] = useState({
     email: "",
     password: "",
@@ -37,6 +39,7 @@ const SignUp = () => {
       const json = await signup(name,email , password)
       console.log(json.message);
       localStorage.setItem("token", json.token);
+      SetAuthToken(json.token);
       const userdata = await getUser();
       
       localStorage.setItem("user", JSON.stringify(userdata.user));
@@ -147,14 +150,35 @@ const SignUp = () => {
      
         <GoogleLogin
         
-          onSuccess={(credentialResponse) => {
+          onSuccess={async(credentialResponse) => {
             console.log("JWT Token:", credentialResponse);
-            // You can send credentialResponse.credential to backend to verify JWT
+            const {credential} = credentialResponse;
+                const payload = credential ? decodeJwt(credential) : null;
+                console.log("Decoded JWT Payload:", payload);
+                if (payload) {
+                  const email = payload.email;
+                  console.log("User Email from Google JWT:", email);
+                  // You can implement further logic here, such as checking if the user exists in your database
+                  // and logging them in or creating a new account.
+                }
+                try {
+      const json = await googleLogin(credential)
+      console.log(json.message);
+      localStorage.setItem("token", json.token);
+      SetAuthToken(json.token);
+      const userdata = await getUser();
+      
+      localStorage.setItem("user", JSON.stringify(userdata.user));
+      setUser(userdata.user);
+      navigate("/");
+    } catch (error) {
+      console.error("Error signing up:", error);
+    }
           }}
           onError={(error) => {
             console.log("Login Failed", error);
           }}
-          type="icon"
+          type="standard"
           
           
         />

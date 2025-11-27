@@ -1,8 +1,15 @@
 import React from 'react'
 import { NavLink, useLocation } from 'react-router-dom';
+import UserContext from '../context/users/UserContext';
 
 const Navbar = () => {
   const location = useLocation();
+  const { user } = React.useContext(UserContext);
+  let profile_url = `https://ui-avatars.com/api/?name=${user?.name}&background=random&color=random&bold=true&rounded=true`
+  const resizedUrl = user.profile_url? user.profile_url.replace(
+  "/upload/",
+  "/upload/w_200,h_200,c_fill,g_face/"
+): false;
   
 
   const colorMap = {
@@ -39,9 +46,13 @@ const Navbar = () => {
    <>
   
 
-<aside class="flex">
-    <div class="flex flex-col items-center w-16 h-screen pt-24 pb-8  space-y-8 bg-white border-r dark:border-gray-700">
+<aside class="flex ">
 
+    <div class="flex flex-col items-center w-16 h-screen  bg-white border-r dark:border-gray-700">
+      
+      <img class="w-14 h-32 pb-4 rounded-full mx-auto" src={`${resizedUrl || profile_url}`} alt="Profile picture" />
+      
+      <div class="flex flex-col  space-y-8">
        <IconWrapper tooltip={"Home"} hoverColor="blue" path="/" >
         
    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"  className="size-8  ">
@@ -75,6 +86,7 @@ const Navbar = () => {
   <path strokeLinecap="round" strokeLinejoin="round" 
         d="M12.75 7.5a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.11A12.318 12.318 0 0 1 9.375 21c-2.33 0-4.512-.645-6.374-1.765Z" />
 </svg></IconWrapper>
+</div>
 
 
     </div>
