@@ -46,13 +46,13 @@ const Navbar = () => {
    <>
   
 
-<aside class="flex ">
+<aside className="flex ">
 
-    <div class="flex flex-col items-center w-16 h-screen  bg-white border-r dark:border-gray-700">
+    <div className="flex flex-col items-center w-16 h-screen  bg-white border-r dark:border-gray-700">
       
-      <img class="w-14 h-32 pb-4 rounded-full mx-auto" src={`${resizedUrl || profile_url}`} alt="Profile picture" />
+      <img className="w-14 h-32 pb-4 rounded-full mx-auto" src={`${resizedUrl || profile_url}`} alt="Profile picture" />
       
-      <div class="flex flex-col  space-y-8">
+      <div className="flex flex-col  space-y-8">
        <IconWrapper tooltip={"Home"} hoverColor="blue" path="/" >
         
    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"  className="size-8  ">
