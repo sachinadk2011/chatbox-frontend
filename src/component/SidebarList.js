@@ -109,7 +109,7 @@ const SidebarList = () => {
             return(
             <div key={element._id} className="flex items-center mb-4 cursor-pointer hover:bg-gray-100 p-2 rounded-md">
               <ChatList  name={element.name} message={lastMsg.find(msg=> msg.frdId === element._id)?.message}
-              onClick={()=>DisplayChat(element)} mutualfrdlen={element.mutualfrdlen} frdlen={element.friends.length} />
+              onClick={()=>DisplayChat(element)} mutualfrdlen={element.mutualfrdlen} profileUrl={element.profile_Url} frdlen={element.friends.length} />
             </div>
         )})}
         </div> 

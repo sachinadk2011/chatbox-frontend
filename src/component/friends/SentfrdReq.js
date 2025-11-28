@@ -35,6 +35,8 @@ const SentfrdReq = () => {
             
             mutualFriends={request.mutualfrdlen}
             friendlen={request.friends.length}
+            profileUrl={request.profile_Url}
+            email={request.email}
           />
           
         ))}

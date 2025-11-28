@@ -1,10 +1,9 @@
-import {useState, useContext, useRef} from 'react'
+import {useState, useContext} from 'react'
 import { useNavigate } from "react-router";
 import UserContext from '../context/users/UserContext';
 import SetAuthToken from '../utils/SetAuthToken';
 import { GoogleLogin  } from '@react-oauth/google';
-import { FcGoogle } from "react-icons/fc"; // Google icon
-import { decodeJwt } from 'jose';
+
 
 
 
@@ -27,16 +26,10 @@ const Login = () => {
   const handleGoogleSuccess = async (credentialResponse) => {
     console.log("JWT Token:", credentialResponse);
     const {credential} = credentialResponse;
-    const payload = credential ? decodeJwt(credential) : null;
-    console.log("Decoded JWT Payload:", payload);
-    if (payload) {
-      const email = payload.email;
-      console.log("User Email from Google JWT:", email);
-      // You can implement further logic here, such as checking if the user exists in your database
-      // and logging them in or creating a new account.
-    }
+    
     try {
-      const json = await googleLogin(credential);
+      SetAuthToken(credential);
+      const json = await googleLogin();
       console.log("json: ", json, json.success);
       
      
@@ -142,7 +135,8 @@ const Login = () => {
         
           onSuccess={handleGoogleSuccess}
           onError={handleGoogleError}
-          type="icon"
+          type="standard"
+          locale='en'
           
           
         />

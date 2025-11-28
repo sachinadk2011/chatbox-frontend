@@ -1,4 +1,4 @@
-import React, {useEffect, useContext, useEffectEvent, useState} from 'react';
+import React, {useEffect, useContext, useCallback, useState} from 'react';
 import './App.css';
 import Login from './auth_pages/Login';
 import {
@@ -15,12 +15,9 @@ import { UserState } from './context/users/UserState';
 import { MessageState } from './context/message/MessageState';
 import { FriendsState } from './context/friends/FriendsState';
 import UserContext from './context/users/UserContext';
-import setupAxiosInterceptors from './utils/SetupAxiosInterceptors';
 import SetAuthToken from './utils/SetAuthToken';
 import socket from './server/socket';
-import MessageContext from './context/message/MessageContext';
 import FrdConnection from './pages/FrdConnection';
-import FriendList from './component/friends/FriendList';
 import SuggestionsFriend from './component/friends/SuggestionFriend';
 import Navbar from './component/Navbar';
 import ReceivedReq from './component/friends/ReceivedReq'; 
@@ -42,7 +39,7 @@ function AppContent() {
    const hideSidebar = location.pathname === "/login" || location.pathname === "/signup";
    const [isOnline, setIsOnline] = useState(navigator.onLine);
 
-   const fetchUser = useEffectEvent( async () => {
+   const fetchUser = useCallback( async () => {
     const token = localStorage.getItem("token");
   if (!token) return; // no token, let user be null
 
@@ -60,7 +57,7 @@ console.log("Fetching user with token:", token);
       id: userData.user.id,
       onlineStatus: userData.user.onlineStatus,
       lastActive: userData.user.lastActive,
-      profile_url: userData.user.profile_Url,
+      profile_Url: userData.user.profile_Url,
       public_id: userData.user.public_id
     });
         
@@ -75,12 +72,12 @@ console.log("Fetching user with token:", token);
       navigate("/login");
     } else if (error.request && !error.response) {
     // Network error (no response from server)
-    console.log("Network error: server not reachable or offline", error.message);
+    console.log("Network error: server not reachable or offline", error.message, isOnline);
     // Set a state to show network error banner
   } else {
     console.log("Other error:", error.message);
   }
-  }});
+  }}, [getUser, setUser, navigate]);
 
   useEffect(() => {
   
@@ -99,7 +96,7 @@ console.log("Fetching user with token:", token);
     window.removeEventListener("offline", goOffline);
     window.removeEventListener("online", goOnline);
   };
-  }, []);
+  }, [fetchUser]);
   return (
    <>
     <div className="flex flex-row ">
@@ -115,7 +112,7 @@ console.log("Fetching user with token:", token);
 
           {/* Protected routes */}
           <Route path="/" element={<ProtectedRoute element={<ChatRoom />} />} />
-          <Route path="/friends" element={<ProtectedRoute element={<FrdConnection />} />} />
+          <Route path="/friends/list" element={<ProtectedRoute element={<FrdConnection />} />} />
           <Route
             path="/friends/add-friend"
             element={<ProtectedRoute element={<SuggestionsFriend />} />}

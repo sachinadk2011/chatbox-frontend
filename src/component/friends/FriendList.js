@@ -1,14 +1,13 @@
-import React, { useState , useContext} from 'react';
-import FriendsContext from '../../context/friends/FriendsContext';
+import React, {useContext} from 'react';
 import Headers from '../Header';
-import ChatList from '../ChatList';
 import SidebarList from '../SidebarList';
 import ChatWindow from '../ChatWindow';
 import MessageContext from '../../context/message/MessageContext';
 
 const FriendList = () => {
-  const { friends } = useContext(FriendsContext);
-  const {Selecteduser} = React.useContext(MessageContext);
+ 
+  const {Selecteduser} = useContext(MessageContext);
+  
 
   return (
     <>

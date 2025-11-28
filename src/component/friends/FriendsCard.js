@@ -1,14 +1,21 @@
 import React from 'react'
 import FriendsContext from '../../context/friends/FriendsContext';
 import { useLocation } from 'react-router-dom';
+import UserContext from '../../context/users/UserContext';
 
-const FriendsCard = ({id, name, mutualFriends=0, friendlen=0}) => {
-  const { sendFriendRequest,cancelFriendRequest, setPeople, receivedFriendRequest, setReceivedFrdReq } = React.useContext(FriendsContext);
+const FriendsCard = ({id, name, mutualFriends=0, friendlen=0, profileUrl, email}) => {
+  const { sendFriendRequest,cancelFriendRequest, setPeople, receivedFriendRequest, setReceivedFrdReq,  receivedFrdReq, sentFrdReq, people } = React.useContext(FriendsContext);
+  const { user } = React.useContext(UserContext);
   let location = useLocation();
   const path = location.pathname;
   const sentPath = "/friends/sent-requests";
   const receivedPath = "/friends/received-requests";
   const addFrdPath = "/friends/add-friend";
+  let profile_url = `https://ui-avatars.com/api/?name=${name}&background=random&color=random&bold=true&rounded=true`
+  const resizedUrl = profileUrl? profileUrl.replace(
+  "/upload/",
+  "/upload/w_200,h_200,c_fill,g_face/"
+): false;
 
   
   const Accept = async()=>{
@@ -100,7 +107,7 @@ const FriendsCard = ({id, name, mutualFriends=0, friendlen=0}) => {
     
 <div className="bg-white pt-10 shadow-lg rounded-xl p-6 text-center hover:shadow-xl transition">
       <img
-        src={`https://ui-avatars.com/api/?name=${name}&background=random&color=random&bold=true&rounded=true`}
+        src={`${resizedUrl || profile_url}`}
         alt={name}
         className="w-24 h-24 mx-auto rounded-full -mt-12 border-4 border-white shadow-md"
       />
@@ -114,6 +121,9 @@ const FriendsCard = ({id, name, mutualFriends=0, friendlen=0}) => {
         <span>
           <strong>{friendlen}</strong> Friends
         </span>
+        {/* <span>
+          <strong>{email}</strong>
+        </span> */}
       </div>
 
       <button onClick={() => path === addFrdPath? AddingFrd(): CancelReq()} className={`w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-full  font-medium transition  ${path === addFrdPath || path === sentPath ? 'visible' : 'hidden'}`}>

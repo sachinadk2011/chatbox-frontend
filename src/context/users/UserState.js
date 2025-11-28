@@ -61,9 +61,9 @@ export const UserState = (props) => {
   }
 
 // login/signup with google
-const googleLogin = async(token)=>{
+const googleLogin = async()=>{
   try {
-    const response = await axios.post('/api/auth/googlelogin', { token });
+    const response = await axios.post('/api/auth/googlelogin');
     console.log("google login response: ", response.data);
 
     return response.data;
@@ -87,7 +87,7 @@ const googleLogin = async(token)=>{
       id: response.data.user.id,
       onlineStatus: response.data.user.onlineStatus,
       lastActive: response.data.user.lastActive,
-      profile_url: response.data.user.profile_Url,
+      profile_Url: response.data.user.profile_Url,
       public_id: response.data.user.public_id
     });
     console.log("getUser response:", response.data);

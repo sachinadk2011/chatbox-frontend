@@ -129,14 +129,18 @@ try{
    </span>
    </Activity>         
    
+   
+
    <input 
    type="file"
    multiple
    accept="image/*,video/*"
    ref={fileRef}
-     onChange={handleFileChange}
-     className='display-none'
+   onChange={handleFileChange}
+   className="absolute w-0 h-0 opacity-0 overflow-hidden"
+   
    />
+   
            
       
      

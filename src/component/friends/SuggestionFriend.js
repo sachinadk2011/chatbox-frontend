@@ -35,6 +35,8 @@ const SuggestionsFriend = () => {
             name={person.name}
             mutualFriends={person.mutualfrdlen}
             friendlen={person.friends.length}
+            profileUrl={person.profile_Url}
+            email={person.email}
           />
           
         ))}

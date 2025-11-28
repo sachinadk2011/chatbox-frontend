@@ -1,15 +1,17 @@
 import React from 'react'
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import UserContext from '../context/users/UserContext';
 
 const Navbar = () => {
-  const location = useLocation();
+  
   const { user } = React.useContext(UserContext);
   let profile_url = `https://ui-avatars.com/api/?name=${user?.name}&background=random&color=random&bold=true&rounded=true`
-  const resizedUrl = user.profile_url? user.profile_url.replace(
+  const resizedUrl = user.profile_Url? user.profile_Url.replace(
   "/upload/",
   "/upload/w_200,h_200,c_fill,g_face/"
 ): false;
+console.log("Navbar resizedUrl: ",user.profile_Url );
+
   
 
   const colorMap = {
@@ -49,9 +51,9 @@ const Navbar = () => {
 <aside className="flex ">
 
     <div className="flex flex-col items-center w-16 h-screen  bg-white border-r dark:border-gray-700">
-      
-      <img className="w-14 h-32 pb-4 rounded-full mx-auto" src={`${resizedUrl || profile_url}`} alt="Profile picture" />
-      
+      <div className="my-4">
+      <img className="w-14 h-14 rounded-full object-cover mx-auto" src={`${resizedUrl || profile_url}`} alt="Profile" />
+      </div>
       <div className="flex flex-col  space-y-8">
        <IconWrapper tooltip={"Home"} hoverColor="blue" path="/" >
         
@@ -62,7 +64,7 @@ const Navbar = () => {
 
 
         </IconWrapper>
-<IconWrapper tooltip={"Friends"} hoverColor="blue" path="/friends" >
+<IconWrapper tooltip={"Friends"} hoverColor="blue" path="/friends/list" >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"  className="size-6 ">
   <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z" clipRule="evenodd" />
 </svg>
