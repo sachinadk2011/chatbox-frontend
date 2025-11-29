@@ -1,12 +1,12 @@
 import MessageContext from "./MessageContext";
 import React, { useState, useCallback, useContext, useEffect } from 'react';
-import axios from 'axios';
+
 import UserContext from "../users/UserContext";
 import socket from "../../server/socket"; 
+import { api } from '../../utils/SetAuthToken';
 
 export const MessageState = (props) => {
-    axios.defaults.baseURL = process.env.REACT_APP_URL;
-    axios.defaults.headers.common['auth-token'] = localStorage.getItem('token');
+   ;
     const { user } = useContext(UserContext);
     
 
@@ -68,7 +68,7 @@ useEffect(() => {
     // fetch all messages
     const fetchMessages = useCallback(async () => {
         try {
-            const response = await axios.get('/api/messages/fetchallmessages');
+            const response = await api.get('/api/messages/fetchallmessages');
            
             const msg = response.data.messages;
            
@@ -84,7 +84,7 @@ useEffect(() => {
     //send a message
     const sendMessage = async (formData) => {
         try {
-            const response = await axios.post('/api/messages/sendmessage', formData
+            const response = await api.post('/api/messages/sendmessage', formData
             );
             if (!response.data.success) {
               throw new Error(response.data.error || 'Message sending failed');
@@ -103,7 +103,7 @@ useEffect(() => {
     //marksasread a message
     const markAsRead = async (senderId) => {
         try {
-             await axios.put(`/api/messages/markasread/${senderId}`);
+             await api.put(`/api/messages/markasread/${senderId}`);
 
         } catch (error) {
             console.error("Error marking message as read:", error);

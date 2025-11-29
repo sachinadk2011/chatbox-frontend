@@ -1,12 +1,12 @@
 import UserContext from "./UserContext";
-import { useState } from "react";
-
-
-import axios from 'axios';
-
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import {api} from '../../utils/SetAuthToken';
+import setupAxiosInterceptors from "../../utils/SetupAxiosInterceptors";
 
 export const UserState = (props) => {
-  axios.defaults.baseURL = process.env.REACT_APP_URL;
+  let navigate = useNavigate();
+ 
   const [user, setUser] = useState(
     () => {
       const storedUser = localStorage.getItem("user");
@@ -20,16 +20,10 @@ export const UserState = (props) => {
   
 
 
-
-
-
-  
-  
-
   //signup
   const signup = async(name, email, password)=>{
     try {
-    const response = await axios.post('/api/auth/createuser', { name,email, password });
+    const response = await api.post('/api/auth/createuser', { name,email, password });
 
     console.log("response: ", response.data);
 
@@ -47,7 +41,7 @@ export const UserState = (props) => {
   //login auth
   const login = async(email, password)=>{
    try{
-    const response = await axios.post('/api/auth/loginuser', { email, password });
+    const response = await api.post('/api/auth/loginuser', { email, password });
     console.log("response: ", response.data);
     
     
@@ -63,7 +57,7 @@ export const UserState = (props) => {
 // login/signup with google
 const googleLogin = async()=>{
   try {
-    const response = await axios.post('/api/auth/googlelogin');
+    const response = await api.post('/api/auth/googlelogin');
     console.log("google login response: ", response.data);
 
     return response.data;
@@ -75,7 +69,7 @@ const googleLogin = async()=>{
   // gets user
   const getUser = async()=>{
     try {
-      const response = await axios.get('/api/auth/getuser'
+      const response = await api.get('/api/auth/getuser'
         
       );
       console.log("getUser response:", response.data);
@@ -99,9 +93,24 @@ const googleLogin = async()=>{
 
   }
 }
+  const RefreshToken = useCallback(async ()=>{
+    try {
+      const response = await api.post('/api/auth/token',{}, { withCredentials: true });
+      console.log("RefreshToken response:", response.data);
+      return response.data.token;
+      
+    } catch (error) {
+      console.error("Error refreshing token:", error);
+      throw error.response?.data.error||error.response?.data.msg || error.response?.data.message || { success: false, message:error.error || "Something went wrong" };
+    }
+  })
+
+  useEffect(() => {
+    setupAxiosInterceptors(navigate, RefreshToken);
+  }, [navigate, RefreshToken]);
 
   return (
-    <UserContext.Provider value={{ login, signup, getUser, user, setUser, googleLogin }}>
+    <UserContext.Provider value={{ login, signup, getUser, user, setUser, googleLogin, RefreshToken }}>
       {props.children}
     </UserContext.Provider>
   );

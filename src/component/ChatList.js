@@ -13,7 +13,7 @@ const ChatList = ({name, message,onClick, mutualfrdlen,profileUrl, frdlen}) => {
   "/upload/",
   "/upload/w_200,h_200,c_fill,g_face/"
 ): false;
-console.log("Navbar resizedUrl: ",profileUrl );
+console.log("sidebar resizedUrl: ",profileUrl );
 
     return(
         <>

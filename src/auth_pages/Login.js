@@ -76,10 +76,10 @@ const Login = () => {
         const userdata = await getUser();
         
         localStorage.setItem("user", JSON.stringify(userdata.user));
+        setUser(userdata.user);
 
         console.log("user: ", localStorage.getItem("user"));
         console.log("About to setUser");
-        setUser(userdata.user);
         navigate("/");
     } catch (error) {
       setCredential({

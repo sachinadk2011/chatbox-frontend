@@ -4,12 +4,13 @@ import MessageContext from '../context/message/MessageContext';
 import FriendsContext from '../context/friends/FriendsContext';
 import { useNavigate } from "react-router";
 import UserContext from '../context/users/UserContext';
+import SetAuthToken from '../utils/SetAuthToken';
 
 const SidebarList = () => {
    let navigate = useNavigate();
     const { setSelectedUser,selectedUser, messages, fetchMessages, setMessages } = useContext(MessageContext);
     const { friends, fetchFriends, setFriends } = useContext(FriendsContext);
-    const { user } = useContext(UserContext);
+    const { user, RefreshToken } = useContext(UserContext);
 
     //;
     
@@ -17,6 +18,9 @@ const SidebarList = () => {
     
 
     useEffect( () => {
+      console.log("Setting up axios interceptors in SidebarList", user, localStorage.getItem("token"));
+      SetAuthToken(localStorage.getItem("token"));
+      if (!user) return;
       const fetchdata = async()=>{
       try{
      const frd= await fetchFriends();
@@ -39,6 +43,7 @@ const SidebarList = () => {
             }, []));
    
   }catch(error){
+   
     console.error("Error in sidebarlist useeffect:", error);
     if (!error.success){
       navigate("/login");

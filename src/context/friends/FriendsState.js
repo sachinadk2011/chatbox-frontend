@@ -1,12 +1,9 @@
 import FriendsContext from "./FriendsContext";
 import { useState, useCallback } from "react";
-import axios from "axios";
+import { api } from '../../utils/SetAuthToken';
 
 
 export const FriendsState = (props) => {
-    axios.defaults.baseURL = process.env.REACT_APP_URL;
-    axios.defaults.headers.common['auth-token'] = localStorage.getItem('token');
-
     const [friends, setFriends] = useState([]);
     const [people, setPeople] = useState([]);
     const [receivedFrdReq, setReceivedFrdReq] = useState([]);
@@ -15,7 +12,7 @@ export const FriendsState = (props) => {
     // Fetch all friends
     const fetchFriends = useCallback(async () => {
         try {
-            const response = await axios.get('/api/friends/fetchallfriends');
+            const response = await api.get('/api/friends/fetchallfriends');
         
             
             return response.data.friends;
@@ -28,7 +25,7 @@ export const FriendsState = (props) => {
     // fetch all received frd req 
     const fetchReceivedRequests = useCallback(async () => {
         try {
-            const response = await axios.get('/api/friends/fetchallreceivedrequests');
+            const response = await api.get('/api/friends/fetchallreceivedrequests');
             setReceivedFrdReq(response.data.friendRequests);
             return response.data;
         } catch (error) {
@@ -40,7 +37,7 @@ export const FriendsState = (props) => {
     //suggestion frd 
     const suggestionFrds =useCallback(async () => {
         try {
-            const response = await axios.get('/api/friends/suggestfriends');
+            const response = await api.get('/api/friends/suggestfriends');
             setPeople(response.data.suggestionFriends);
             console.log(response.data.suggestionFriends);
         } catch (error) {
@@ -52,7 +49,7 @@ export const FriendsState = (props) => {
     // received frd req 
     const receivedFriendRequest = async (friendId, action) => {
         try {
-            const response = await axios.post(`/api/friends/actiononfriendrequest`, { friendId, action });
+            const response = await api.post(`/api/friends/actiononfriendrequest`, { friendId, action });
 
             return response.data;
         } catch (error) {
@@ -64,7 +61,7 @@ export const FriendsState = (props) => {
     //fetch all send frd req
     const fetchSentRequests = useCallback(async () => {
         try {
-            const response = await axios.get('/api/friends/fetchallsentrequests');
+            const response = await api.get('/api/friends/fetchallsentrequests');
             setSentFrdReq(response.data.sentRequests);
             return response.data;
         } catch (error) {
@@ -76,7 +73,7 @@ export const FriendsState = (props) => {
     //sent frd req 
     const sendFriendRequest = async (friendId) => {
         try {
-            const response = await axios.post('/api/friends/sendfriendrequest', { friendId });
+            const response = await api.post('/api/friends/sendfriendrequest', { friendId });
             return response.data;
         } catch (error) {
             console.error("Error sending friend request:", error.response.data.error , error.response.data.message);
@@ -87,7 +84,7 @@ export const FriendsState = (props) => {
     //cancel sent frd req
     const cancelFriendRequest = async (friendId) => {
         try {
-            const response = await axios.post('/api/friends/cancelsentfriendrequest', { friendId });
+            const response = await api.post('/api/friends/cancelsentfriendrequest', { friendId });
             setSentFrdReq(prevRequests => prevRequests.filter(request => request._id !== friendId));
             return response.data;
         } catch (error) {

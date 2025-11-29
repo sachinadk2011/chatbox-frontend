@@ -25,6 +25,7 @@ import SentfrdReq from './component/friends/SentfrdReq';
 
 
 
+
 function ProtectedRoute({ element }) {
   const { user } = useContext(UserContext);
   
@@ -33,20 +34,22 @@ function ProtectedRoute({ element }) {
 function AppContent() {
   console.log("AppContent rendered: ", socket);
   let navigate = useNavigate();
-   const { getUser, setUser , user} = useContext(UserContext);
+   const { getUser, setUser , user, RefreshToken } = useContext(UserContext);
    const location = useLocation();
     
    const hideSidebar = location.pathname === "/login" || location.pathname === "/signup";
    const [isOnline, setIsOnline] = useState(navigator.onLine);
 
-   const fetchUser = useCallback( async () => {
-    const token = localStorage.getItem("token");
-  if (!token) return; // no token, let user be null
+   
 
-  SetAuthToken(token); // attach token globally
-console.log("Fetching user with token:", token);
+
+   const fetchUser = useCallback( async () => {
+
+    const token = localStorage.getItem("token");
+   if (token) SetAuthToken(token); // attach current token
   
     try {
+      
       const userData = await getUser();
       if (userData.success) {
         console.log("userData: ", userData);
@@ -137,18 +140,19 @@ console.log("Fetching user with token:", token);
 }
 
 function App(){
+ 
   return(
     <>
+    <Router>
     <UserState>
       <FriendsState>
      <MessageState>
       
-    <Router>
       <AppContent />
-    </Router>
     </MessageState>
     </FriendsState>
     </UserState>
+    </Router>
     
     </>
   )
