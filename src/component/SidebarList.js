@@ -25,6 +25,7 @@ const SidebarList = () => {
       try{
      const frd= await fetchFriends();
     const msg= await fetchMessages();
+    console.log("Fetched friends and messages in SidebarList useEffect", frd);
     setFriends(frd);
     setMessages(msg.reduce((acc, mg)=>{
               const otherUserId = mg.sender._id.toString() === user?.id.toString() ? mg.receiver._id.toString() : mg.sender._id.toString();
@@ -99,7 +100,9 @@ const SidebarList = () => {
               receiverId: friend._id,          // friend’s id
               receiverName: friend.name,      // friend’s name
               senderId: JSON.parse(localStorage.getItem('user')).id,              // your id
-              senderName: JSON.parse(localStorage.getItem('user')).name           // your name
+              senderName: JSON.parse(localStorage.getItem('user')).name,           // your name
+              lastActive: friend.lastActive,
+              onlineStatus: friend.onlineStatus
   });
   
         

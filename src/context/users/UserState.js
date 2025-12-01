@@ -13,7 +13,11 @@ export const UserState = (props) => {
       return storedUser ? JSON.parse(storedUser) : {
         name: "",
         email: "",
-        id: ""
+        id: "",
+        onlineStatus: false,
+        lastActive: null,
+        profile_Url: null,
+        public_id: null
       };
     }
   );
@@ -106,11 +110,27 @@ const googleLogin = async()=>{
   })
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
     setupAxiosInterceptors(navigate, RefreshToken);
-  }, [navigate, RefreshToken]);
+  }, [ RefreshToken]);
+
+  const logout = async ()=>{
+    try {
+      const response = await api.post('/api/auth/logout', {}, { withCredentials: true });
+      console.log("Logout response:", response.data);
+      
+      return response.data;
+      
+    } catch (error) {
+      console.error("Error during logout:", error);
+      throw error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" };
+      
+    }
+  }
 
   return (
-    <UserContext.Provider value={{ login, signup, getUser, user, setUser, googleLogin, RefreshToken }}>
+    <UserContext.Provider value={{ login, signup, getUser, user, setUser, googleLogin, RefreshToken, logout }}>
       {props.children}
     </UserContext.Provider>
   );

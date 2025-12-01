@@ -4,6 +4,7 @@ import React, { useState, useCallback, useContext, useEffect } from 'react';
 import UserContext from "../users/UserContext";
 import socket from "../../server/socket"; 
 import { api } from '../../utils/SetAuthToken';
+import LastActive from "../../utils/lastactive";
 
 export const MessageState = (props) => {
    ;
@@ -16,7 +17,9 @@ export const MessageState = (props) => {
         receiverId: null,
         senderId: null,
         receiverName: " ",
-        senderName: " " 
+        senderName: " " ,
+        lastActive: null,
+        onlineStatus: false
       });
 
       
@@ -55,13 +58,29 @@ useEffect(() => {
 }, []);
 
 useEffect(() => {
-  socket.on("connect", () => {
-  const token = localStorage.getItem("token");
-  if (token && user?.id) {
-    socket.emit("joinRoom", user.id);
-  }
-});
+  if (!user?.id) return; // wait until user ID is available
+
+  const handleConnect = () => {
+    const token = localStorage.getItem("token");
+    if (token && user.onlineStatus) {
+      socket.emit("joinRoom", user.id);
+    }
+  };
+
+  socket.on("connect", handleConnect);
+
+  const interval = setInterval(() => {
+    if (user?.id) socket.emit("alive");
+  }, 10000);
+
+  return () => {
+    socket.off("connect", handleConnect);
+    clearInterval(interval);
+  };
 }, [user?.id]);
+
+
+
 
 
 

@@ -1,16 +1,17 @@
 import React from 'react'
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import UserContext from '../context/users/UserContext';
 
 const Navbar = () => {
   
-  const { user } = React.useContext(UserContext);
+  const { user, logout, setUser } = React.useContext(UserContext);
   let profile_url = `https://ui-avatars.com/api/?name=${user?.name}&background=random&color=random&bold=true&rounded=true`
   const resizedUrl = user.profile_Url? user.profile_Url.replace(
   "/upload/",
   "/upload/w_200,h_200,c_fill,g_face/"
 ): false;
 console.log("Navbar resizedUrl: ",user.profile_Url );
+let navigate = useNavigate();
 
   
 
@@ -20,17 +21,45 @@ console.log("Navbar resizedUrl: ",user.profile_Url );
   yellow: "hover:fill-yellow-500 hover:stroke-yellow-500",
   green: "fill-green-500 stroke-green-500",
 };
+  const handleLogout = async () => {
+    try {
+      const json = await logout();
+      console.log("Logout successful:", json);
+      setUser({
+        name: "",
+        email: "",
+        id: "",
+        onlineStatus: false,
+        lastActive: null,
+        profile_Url: null,
+        public_id: null
+
+      });
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      navigate("/login");
+      
+    } catch (error) {
+      console.error("Logout error:", error);
+      
+    }
+    
+  };
 
   // Common icon container
-  const IconWrapper = ({ children, tooltip, hoverColor = 'blue', path="/"  }) => (
+  const IconWrapper = ({ children, tooltip, hoverColor = 'blue', path, onClick  }) => (
     <div className="relative group inline-block">
-      <div  className={`transition-colors duration-200 ${colorMap["green"]}  rounded-lg cursor-pointer`}>
-        <NavLink className={({isActive})=>
+      <div  className={`transition-colors duration-200 ${colorMap["green"]}  rounded-lg cursor-pointer`}
+      onClick={path ? undefined : onClick} >
+        {path ? <NavLink className={({isActive})=>
          `nav-link  ${colorMap[hoverColor]} ${isActive ? `active: fill-black active: stroke-black ` : ""}`}
         aria-current="page"
                   to={`${path}`}>
         {children}
-        </NavLink>
+        </NavLink> : 
+        <div className={`${colorMap[hoverColor]}`}>
+        {children}
+        </div>}
       </div>
 
       {/* Tooltip */}
@@ -88,8 +117,8 @@ console.log("Navbar resizedUrl: ",user.profile_Url );
   <path strokeLinecap="round" strokeLinejoin="round" 
         d="M12.75 7.5a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.11A12.318 12.318 0 0 1 9.375 21c-2.33 0-4.512-.645-6.374-1.765Z" />
 </svg></IconWrapper>
-<IconWrapper tooltip={"Logout"} hoverColor='blue' path="/logout" >
-  <svg xmlns="http://www.w3.org/2000/svg"  viewBox="0 0 24 24"  fill='none' className="size-7">
+<IconWrapper tooltip={"Logout"} hoverColor='blue'  >
+  <svg xmlns="http://www.w3.org/2000/svg"  viewBox="0 0 24 24"  fill='none' className="size-7" onClick={handleLogout}>
   <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15" />
 </svg>
 

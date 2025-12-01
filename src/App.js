@@ -46,7 +46,8 @@ function AppContent() {
    const fetchUser = useCallback( async () => {
 
     const token = localStorage.getItem("token");
-   if (token) SetAuthToken(token); // attach current token
+   if(!token)return; // attach current token
+   SetAuthToken(token);
   
     try {
       
@@ -64,6 +65,7 @@ function AppContent() {
       public_id: userData.user.public_id
     });
         
+    navigate("/");
       }
     } catch (error) {
       // Check explicitly for 401
@@ -80,7 +82,7 @@ function AppContent() {
   } else {
     console.log("Other error:", error.message);
   }
-  }}, [getUser, setUser, navigate]);
+  }}, [ setUser]);
 
   useEffect(() => {
   
@@ -91,6 +93,7 @@ function AppContent() {
     setIsOnline(true);
     fetchUser(); // fetch user data once back online
   };
+  fetchUser();
 
   window.addEventListener("offline", goOffline);
   window.addEventListener("online", goOnline);

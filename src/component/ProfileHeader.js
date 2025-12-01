@@ -1,21 +1,27 @@
 import React, {useContext} from 'react';
-
+import LastActive from '../utils/lastactive';
 import MessageContext from '../context/message/MessageContext';
+import FriendsContext  from '../context/friends/FriendsContext';
 /* 
 thsi is that opened chat window where user can see his profile and call .. option like in messenger
 */
 const ProfileHeader = () => {
 
    const { Selecteduser } = useContext(MessageContext);
+   const { friends } = useContext(FriendsContext);
    console.log("pp: "+ JSON.stringify(Selecteduser));
+   console.log("pp: "+  Selecteduser);
     return(
          <>
         <div className="relative flex items-center space-x-4">
          <div className="relative">
             <span className="absolute text-green-500 right-0 bottom-0">
-               <svg width="20" height="20">
+               {Selecteduser.onlineStatus ? <svg width="20" height="20">
                   <circle cx="8" cy="8" r="8" fill="currentColor"></circle>
-               </svg>
+               </svg> : Selecteduser.lastActive &&
+               <span className='text-lg absolute w-max -bottom-3'>
+               <LastActive timestamp={Selecteduser.lastActive} />
+               </span>}
             </span>
          <img src={`https://ui-avatars.com/api/?name=${Selecteduser.receiverName}&background=random&color=random&bold=true&rounded=true`} alt="" className="w-10 sm:w-16 h-10 sm:h-16 rounded-full" />
          </div>
