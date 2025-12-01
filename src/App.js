@@ -88,6 +88,7 @@ function AppContent() {
   
   const goOffline = () => {
     console.log("Network error: server not reachable or offline");
+    setUser(prevUser => ({ ...prevUser, onlineStatus: false }));
     setIsOnline(false)};
   const goOnline = () => {
     setIsOnline(true);

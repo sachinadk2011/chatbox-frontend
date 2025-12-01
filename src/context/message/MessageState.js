@@ -58,11 +58,40 @@ useEffect(() => {
 }, []);
 
 useEffect(() => {
+  if (!socket.connected) return;
+
+  let idleTimer;
+  const idleLimit =  5 * 60 *1000; // 5 min
+
+  const resetIdleTimer = () => {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => {
+      console.log("User idle, disconnecting socket...");
+      socket.disconnect(); // triggers server-side disconnect
+    }, idleLimit);
+  };
+
+  window.addEventListener("mousemove", resetIdleTimer);
+  window.addEventListener("keydown", resetIdleTimer);
+  window.addEventListener("scroll", resetIdleTimer);
+
+  resetIdleTimer();
+
+  return () => {
+    clearTimeout(idleTimer);
+    window.removeEventListener("mousemove", resetIdleTimer);
+    window.removeEventListener("keydown", resetIdleTimer);
+    window.removeEventListener("scroll", resetIdleTimer);
+  };
+}, [socket.connected]);
+
+
+useEffect(() => {
   if (!user?.id) return; // wait until user ID is available
 
   const handleConnect = () => {
     const token = localStorage.getItem("token");
-    if (token && user.onlineStatus) {
+    if (token ) {
       socket.emit("joinRoom", user.id);
     }
   };
