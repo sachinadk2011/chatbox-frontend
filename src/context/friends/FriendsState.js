@@ -17,8 +17,8 @@ export const FriendsState = (props) => {
             
             return response.data.friends;
         } catch (error) {
-            console.error("Error fetching friends:", error);
-            throw error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" };
+            console.error("Error fetching friends:", error, error.message );
+            throw error.response?.data.error || error.response?.data.message||error.message || { success: false, message:error.error || "Something went wrong" };
         }
     }, []);
 
