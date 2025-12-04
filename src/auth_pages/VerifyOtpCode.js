@@ -39,14 +39,14 @@ const VerificationCode = ()=>{
     try {
       const json = await verifyOtp(email, otpCode);
       console.log(json.message);
-      localStorage.setItem("token", json.token);
-      SetAuthToken(json.token);
-      const userdata = await getUser();
       
-      localStorage.setItem("user", JSON.stringify(userdata.user));
-      setUser(userdata.user);
-      localStorage.removeItem("tempData");
       if (from === "signup"){
+        localStorage.setItem("token", json.token);
+        SetAuthToken(json.token);
+        const userdata = await getUser();
+        
+        localStorage.setItem("user", JSON.stringify(userdata.user));
+        setUser(userdata.user);
       
       navigate("/");
       }else if (from === "resetpassword"){

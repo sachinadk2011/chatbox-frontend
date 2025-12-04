@@ -1,5 +1,5 @@
 import {useState, useContext} from 'react'
-import { useNavigate } from "react-router";
+import { useNavigate, NavLink } from "react-router";
 import UserContext from '../context/users/UserContext';
 import SetAuthToken from '../utils/SetAuthToken';
 import { GoogleLogin  } from '@react-oauth/google';
@@ -121,7 +121,7 @@ const Login = () => {
     </div>
     
     <div className="mb-6 text-blue-500">
-      <a href="#" className="hover:underline">Forgot Password?</a>
+      <NavLink to="/forget-password" className="hover:underline">Forgot Password?</NavLink>
     </div>
     
     <button type="submit" className="bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-md py-2 px-4 w-full" >Login</button>

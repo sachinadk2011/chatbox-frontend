@@ -155,8 +155,34 @@ const googleLogin = async()=>{
     }
   }
 
+  const forgetPassword = async(email)=>{
+    try {
+      const response = await api.post('/api/auth/forgetpassword', { email });
+      console.log("forgetPassword response:", response.data);
+      return response.data;
+      
+    } catch (error) {
+      console.error("Error resending OTP:", error);
+      throw error.response?.data.error || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" };
+    }
+  }
+
+  const setPassword = async(email, newPassword, oldPassword=null)=>{
+    try {
+      const response = await api.post('/api/auth/resetpassword', {email, newPassword, oldPassword });
+      console.log("setPassword response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error setting password:", error);
+      if (error.response?.status === 400) {
+        throw {errors: error.response?.data.errors , msg: error.response?.data.message };
+      }
+      throw error.response?.data.error || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" };
+    }
+  }
+
   return (
-    <UserContext.Provider value={{ login, signup, getUser, user, setUser, googleLogin, RefreshToken, logout, verifyOtp, resendOtp }}>
+    <UserContext.Provider value={{ login, signup, getUser, user, setUser, googleLogin, RefreshToken, logout, verifyOtp, resendOtp, forgetPassword, setPassword }}>
       {props.children}
     </UserContext.Provider>
   );

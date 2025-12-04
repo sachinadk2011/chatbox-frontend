@@ -23,6 +23,8 @@ import Navbar from './component/Navbar';
 import ReceivedReq from './component/friends/ReceivedReq'; 
 import SentfrdReq from './component/friends/SentfrdReq';
 import VerificationCode from './auth_pages/VerifyOtpCode';
+import UpdateEmail from './auth_pages/UpdateEmail';
+import SetPassword from './auth_pages/SetPassword';
 
 
 
@@ -38,7 +40,7 @@ function AppContent() {
    const { getUser, setUser , user, RefreshToken } = useContext(UserContext);
    const location = useLocation();
     
-   const hideSidebar = location.pathname === "/login" || location.pathname === "/signup" || location.pathname === "/verify-otp";
+   const hideSidebar = location.pathname === "/login" || location.pathname === "/signup" || location.pathname === "/verify-otp" || location.pathname === "/forget-password" || location.pathname === "/set-new-password";
    const [isOnline, setIsOnline] = useState(navigator.onLine);
 
    
@@ -118,6 +120,8 @@ function AppContent() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/verify-otp" element={<VerificationCode />} />
+          <Route path="/forget-password" element={<UpdateEmail />} />
+          <Route path="/set-new-password" element={<SetPassword />} />
 
           {/* Protected routes */}
           <Route path="/" element={<ProtectedRoute element={<ChatRoom />} />} />
