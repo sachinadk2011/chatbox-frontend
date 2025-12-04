@@ -35,7 +35,7 @@ export const UserState = (props) => {
 
     return response.data;
     }catch(error){
-  throw error.response?.data.error || error.response?.data.message || { success: false, message: error.error || "Something went wrong" };
+  throw error.response?.data.error || error.response?.data.message || error.message || { success: false, message: error.error || "Something went wrong" };
 }
   
 
@@ -54,7 +54,7 @@ export const UserState = (props) => {
     return response.data;
   
 }catch(error){
-  throw error.response?.data.error || error.response?.data.message || { success: false, message: error.error || "Something went wrong" };
+  throw error.response?.data.error || error.response?.data.message || error.message || { success: false, message: error.error || "Something went wrong" };
 }
   }
 
@@ -66,7 +66,7 @@ const googleLogin = async()=>{
 
     return response.data;
   } catch (error) {
-    throw error.response?.data.error || error.response?.data.message || { success: false, message: error.error || "Something went wrong" };
+    throw error.response?.data.error || error.response?.data.message || error.message || { success: false, message: error.error || "Something went wrong" };
   } 
 }
 
@@ -93,7 +93,7 @@ const googleLogin = async()=>{
       return response.data;
     } catch (error) {
       
-      throw error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" };
+      throw error.response?.data.error || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" };
 
   }
 }
@@ -105,7 +105,7 @@ const googleLogin = async()=>{
       
     } catch (error) {
       console.error("Error refreshing token:", error);
-      throw error.response?.data.error||error.response?.data.msg || error.response?.data.message || { success: false, message:error.error || "Something went wrong" };
+      throw error.response?.data.error||error.response?.data.msg || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" };
     }
   })
 
@@ -124,13 +124,39 @@ const googleLogin = async()=>{
       
     } catch (error) {
       console.error("Error during logout:", error);
-      throw error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" };
+      throw error.response?.data.error || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" };
+      
+    }
+  }
+
+  const verifyOtp = async(email, otpCode)=>{
+    try {
+      const response = await api.post('/api/auth/verify-otp', { email, otpCode });
+      console.log("verifyOtp response:", response.data);
+      return response.data;
+      
+    } catch (error) {
+      console.error("Error verifying OTP:", error);
+      throw error.response?.data.error || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" };
+      
+    }
+  }
+
+  const resendOtp = async(email)=>{
+    try {
+      const response = await api.post('/api/auth/resend', { email });
+      console.log("resendOtp response:", response.data);
+      return response.data;
+      
+    } catch (error) {
+      console.error("Error resending OTP:", error);
+      throw error.response?.data.error || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" };
       
     }
   }
 
   return (
-    <UserContext.Provider value={{ login, signup, getUser, user, setUser, googleLogin, RefreshToken, logout }}>
+    <UserContext.Provider value={{ login, signup, getUser, user, setUser, googleLogin, RefreshToken, logout, verifyOtp, resendOtp }}>
       {props.children}
     </UserContext.Provider>
   );

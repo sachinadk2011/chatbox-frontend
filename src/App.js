@@ -22,6 +22,7 @@ import SuggestionsFriend from './component/friends/SuggestionFriend';
 import Navbar from './component/Navbar';
 import ReceivedReq from './component/friends/ReceivedReq'; 
 import SentfrdReq from './component/friends/SentfrdReq';
+import VerificationCode from './auth_pages/VerifyOtpCode';
 
 
 
@@ -37,7 +38,7 @@ function AppContent() {
    const { getUser, setUser , user, RefreshToken } = useContext(UserContext);
    const location = useLocation();
     
-   const hideSidebar = location.pathname === "/login" || location.pathname === "/signup";
+   const hideSidebar = location.pathname === "/login" || location.pathname === "/signup" || location.pathname === "/verify-otp";
    const [isOnline, setIsOnline] = useState(navigator.onLine);
 
    
@@ -116,6 +117,7 @@ function AppContent() {
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
+          <Route path="/verify-otp" element={<VerificationCode />} />
 
           {/* Protected routes */}
           <Route path="/" element={<ProtectedRoute element={<ChatRoom />} />} />

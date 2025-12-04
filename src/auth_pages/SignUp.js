@@ -36,13 +36,8 @@ const SignUp = () => {
     try {
       const json = await signup(name,email , password)
       console.log(json.message);
-      localStorage.setItem("token", json.token);
-      SetAuthToken(json.token);
-      const userdata = await getUser();
-      
-      localStorage.setItem("user", JSON.stringify(userdata.user));
-      setUser(userdata.user);
-      navigate("/");
+      localStorage.setItem("tempData", JSON.stringify({email, from:"signup"}));
+      navigate("/verify-otp");
     } catch (error) {
       console.error("Error signing up:", error);
     }
