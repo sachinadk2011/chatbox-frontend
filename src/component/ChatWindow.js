@@ -32,6 +32,15 @@ const ChatWindow = () => {
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
     
+    const allowed = ["image/", "video/"];
+
+  for (const file of files) {
+    if (!allowed.some(type => file.type.startsWith(type))) {
+      console.log("alert(\"❌ Only image and video files are allowed!\")");
+      return;
+    }
+  }
+
 
     const mapped = files.map((file) => ({
       url: URL.createObjectURL(file),
@@ -63,6 +72,15 @@ const ChatWindow = () => {
         if (file) pastedFiles.push(file);
       }
     }
+    
+    const allowed = ["image/", "video/"];
+
+  for (const file of pastedFiles) {
+    if (!allowed.some(type => file.type.startsWith(type))) {
+      console.log("alert(\"❌ Only image and video files are allowed!\")");
+      return;
+    }
+  }
 
     if (pastedFiles.length > 0) {
       const mapped = pastedFiles.map((file) => ({
@@ -97,7 +115,8 @@ console.log("files to be sent:", images, images);
       const receiver = Selecteduser.receiverId;
       formData.append("receiver", receiver);
       console.log("formdata entries:", ...formData.entries());
-try{
+      try{
+  console.log("formdata entries:", ...formData.entries());
   
       await sendMessage(formData);
      

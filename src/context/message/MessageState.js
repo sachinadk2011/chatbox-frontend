@@ -132,6 +132,7 @@ useEffect(() => {
     //send a message
     const sendMessage = async (formData) => {
         try {
+          
             const response = await api.post('/api/messages/sendmessage', formData
             );
             if (!response.data.success) {
@@ -143,7 +144,10 @@ useEffect(() => {
 
             
           } catch (error) {
-          console.error("Error sending message:", error, error.error, error.message);
+          console.error("Error sending message error:", error);
+          console.error("Error sending message error.error:",  error.error);
+          console.error("Error sending message error.message:",  error.message);
+
          throw error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" };
         }
     };
