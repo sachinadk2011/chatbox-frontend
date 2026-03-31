@@ -1,278 +1,285 @@
-import React, {useState} from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import '../App.css';
 import ProfileHeader from './ProfileHeader';
 import MessageBox from './MessageBox';
 import MessageContext from '../context/message/MessageContext';
 import Picker from 'emoji-picker-react';
-import { Activity } from 'react';
 
 
-const ChatWindow = () => {
-   const {sendMessage,Selecteduser, setMessages, messages} = React.useContext(MessageContext);
-   const fileRef = React.useRef(null);
+const ChatWindow = ({ onBack }) => {
+  const { sendMessage, Selecteduser, setMessages, messages } = React.useContext(MessageContext);
+  const fileRef = useRef(null);
+  const inputRef = useRef(null);
+  const emojiBtnRef = useRef(null);
 
-   
-   console.log("chatwindow "+Selecteduser.receiverId);
-   const [isShowingSidebar, setIsShowingSidebar] = useState(false);
+  const [isShowingEmoji, setIsShowingEmoji] = useState(false);
+  const [images, setImages] = useState([]);
 
-   const [images, setImages] = useState([]);
-   
+  /* ── Detect mobile (< 768px) ── */
+  const isMobile = () => window.innerWidth < 768;
 
+  /* ── Emoji click: insert into input ── */
+  const onEmojiClick = (emojiObject) => {
+    if (inputRef.current) {
+      const input = inputRef.current;
+      const start = input.selectionStart ?? input.value.length;
+      const end = input.selectionEnd ?? input.value.length;
+      const newVal = input.value.slice(0, start) + emojiObject.emoji + input.value.slice(end);
+      input.value = newVal;
+      // move cursor after inserted emoji
+      requestAnimationFrame(() => {
+        input.selectionStart = input.selectionEnd = start + emojiObject.emoji.length;
+        input.focus();
+      });
+    }
+  };
 
+  /* ── Toggle emoji: native on mobile, picker on desktop ── */
+  const handleEmojiToggle = () => {
+    if (isMobile()) {
+      // Trick: blur then focus with inputmode="emoji" to open native emoji keyboard
+      if (inputRef.current) {
+        inputRef.current.blur();
+        setTimeout(() => {
+          if (inputRef.current) {
+            inputRef.current.focus();
+          }
+        }, 100);
+      }
+    } else {
+      setIsShowingEmoji((prev) => !prev);
+    }
+  };
 
-   const [chosenEmoji, setChosenEmoji] = useState(null);
-
-    const onEmojiClick = ( emojiObject) => {
-      
-      setChosenEmoji(emojiObject);
-      console.log(emojiObject)
-      document.getElementsByName("message")[0].value += emojiObject.emoji;
+  /* ── Close picker on outside click ── */
+  useEffect(() => {
+    const handleOutside = (e) => {
+      if (
+        isShowingEmoji &&
+        emojiBtnRef.current &&
+        !emojiBtnRef.current.contains(e.target)
+      ) {
+        setIsShowingEmoji(false);
+      }
     };
-   // Handle file selection
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, [isShowingEmoji]);
+
+  /* ── File handling ── */
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
-    
-    const allowed = ["image/", "video/"];
-
-  for (const file of files) {
-    if (!allowed.some(type => file.type.startsWith(type))) {
-      console.log("alert(\"❌ Only image and video files are allowed!\")");
-      return;
+    const allowed = ['image/', 'video/'];
+    for (const file of files) {
+      if (!allowed.some((type) => file.type.startsWith(type))) return;
     }
-  }
-
-
     const mapped = files.map((file) => ({
       url: URL.createObjectURL(file),
       name: file.name,
-      size: (file.size / 1024).toFixed(1) + " KB",
-      preview: file.type.startsWith("image/"),
-      file: file,
+      size: (file.size / 1024).toFixed(1) + ' KB',
+      preview: file.type.startsWith('image/'),
+      file,
     }));
-
     setImages((prev) => [...prev, ...mapped]);
   };
 
-  // Remove image
   const removeImage = (index) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
-  React.useEffect(() => {
-  const handlePaste = (e) => {
-    const clipboardItems = e.clipboardData.items;
-    const pastedFiles = [];
-
-    for (let i = 0; i < clipboardItems.length; i++) {
-      const item = clipboardItems[i];
-
-      // Only take images from the clipboard
-      if (item.kind === "file") {
-        const file = item.getAsFile();
-        if (file) pastedFiles.push(file);
+  /* ── Paste handler ── */
+  useEffect(() => {
+    const handlePaste = (e) => {
+      const pastedFiles = [];
+      for (let i = 0; i < e.clipboardData.items.length; i++) {
+        const item = e.clipboardData.items[i];
+        if (item.kind === 'file') {
+          const file = item.getAsFile();
+          if (file) pastedFiles.push(file);
+        }
       }
-    }
-    
-    const allowed = ["image/", "video/"];
-
-  for (const file of pastedFiles) {
-    if (!allowed.some(type => file.type.startsWith(type))) {
-      console.log("alert(\"❌ Only image and video files are allowed!\")");
-      return;
-    }
-  }
-
-    if (pastedFiles.length > 0) {
-      const mapped = pastedFiles.map((file) => ({
-        url: URL.createObjectURL(file),
-        name: file.name,
-        size: (file.size / 1024).toFixed(1) + " KB",
-        preview: file.type.startsWith("image/"),
-        file: file,
-      }));
-
-      setImages((prev) => [...prev, ...mapped]);
-    }
-  };
-
-  
-  // Listen globally for paste
-  window.addEventListener("paste", handlePaste);
-  
-        
-
-  return () => {
-    window.removeEventListener("paste", handlePaste);
-   
-  };
-}, []);
-
-console.log("files to be sent:", images, images);
-   const SendMessage =async(e)=>{
-      e.preventDefault();
-      const formData = new FormData();
-      if (images.length === 0 && e.target.elements.message.value.trim() === "") {
-        return; // Don't send empty messages
+      const allowed = ['image/', 'video/'];
+      for (const file of pastedFiles) {
+        if (!allowed.some((type) => file.type.startsWith(type))) return;
       }
-      
-      const message = e.target.elements.message.value;
-      if (message) formData.append('message', message);
-      images.forEach((f) => {formData.append("files", f.file);
-        console.log("appended file:", f.file);
-      })
-      
-      const receiver = Selecteduser.receiverId;
-      formData.append("receiver", receiver);
-      console.log("formdata entries:", ...formData.entries());
-      try{
-  console.log("formdata entries:", ...formData.entries());
-  
+      if (pastedFiles.length > 0) {
+        const mapped = pastedFiles.map((file) => ({
+          url: URL.createObjectURL(file),
+          name: file.name,
+          size: (file.size / 1024).toFixed(1) + ' KB',
+          preview: file.type.startsWith('image/'),
+          file,
+        }));
+        setImages((prev) => [...prev, ...mapped]);
+      }
+    };
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, []);
+
+  /* ── Send message ── */
+  const SendMessage = async (e) => {
+    e.preventDefault();
+    if (images.length === 0 && inputRef.current?.value.trim() === '') return;
+
+    const formData = new FormData();
+    const message = inputRef.current?.value || '';
+    if (message) formData.append('message', message);
+    images.forEach((f) => formData.append('files', f.file));
+    formData.append('receiver', Selecteduser.receiverId);
+
+    try {
       await sendMessage(formData);
-     
-     setImages([]);
-     e.target.reset();
-}catch(error){
-  console.error("Error sending message:", error);
-}
-     
-   
-  
-  
-}
-    
+      setImages([]);
+      if (inputRef.current) inputRef.current.value = '';
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  };
 
-    return(
-        <>
-       
-<div className="flex-1 p:2 sm:p-6 justify-between flex flex-col h-screen">
-   <div className="flex sm:items-center  justify-between py-3 border-b-2 border-gray-200">
-      <ProfileHeader />
-   </div>
+  /* ── Icon button style ── */
+  const iconBtn =
+    'inline-flex items-center justify-center rounded-full h-9 w-9 transition-all duration-200 text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 focus:outline-none flex-shrink-0';
 
-   <div id="messages" className="flex relative flex-col-reverse gap-y-2 p-3 overflow-y-auto scrollbar-thumb-blue scrollbar-thumb-rounded scrollbar-track-blue-lighter scrollbar-w-2 scrolling-touch ">
-      <MessageBox />
-      
-   <Activity mode={isShowingSidebar ? 'visible' : 'hidden'}  >
-   <span className="absolute right-1/3 bottom-auto cursor-pointer">
-      <Picker onEmojiClick={onEmojiClick}/>
-   </span>
-   </Activity>         
-   
-   
+  return (
+    <>
+      {/*
+        ┌──────── ChatWindow layout ────────┐
+        │  ProfileHeader  (fixed height)    │
+        │  Messages area  (flex-1 scroll)   │
+        │  [image previews if any]          │
+        │  Input toolbar  (fixed height)    │
+        └───────────────────────────────────┘
+      */}
+      <div className="flex flex-col w-full h-full overflow-hidden bg-gray-50">
 
-   <input 
-   type="file"
-   multiple
-   accept="image/*,video/*"
-   ref={fileRef}
-   onChange={handleFileChange}
-   className="absolute w-0 h-0 opacity-0 overflow-hidden"
-   
-   />
-   
-           
-      
-     
-   </div>
-   
-      
-   <div className="border-t-2 relative -bottom-10  border-gray-200 px-4 pt-4 mb-2 sm:mb-0">
-      <form onSubmit={SendMessage} >
-      <div className="relative flex">
-         <span className="absolute inset-y-0 flex items-center">
-            <button type="button" className="inline-flex items-center justify-center rounded-full h-12 w-12 transition duration-500 ease-in-out text-gray-500 hover:bg-gray-300 focus:outline-none">
-               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="h-6 w-6 text-gray-600">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
-               </svg>
-            </button>
-         </span>
-          
-            
- {/* Preview list */}
-      <div className="flex flex-wrap gap-3">
-        {images.map((image, index) => (
-          <div
-            key={index}
-            className="relative w-32 h-32 rounded overflow-hidden border"
-          >
-            {/* If previewable image */}
-            {image.preview ? (
-              <img
-                src={image.url}
-                alt="preview"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              // File icon for non-image files
-              <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                <svg
-                  className="w-16 h-16 text-gray-600"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
+        {/* ── Header ── */}
+        <div className="flex-shrink-0 border-b border-gray-200 bg-white">
+          <ProfileHeader onBack={onBack} />
+        </div>
+
+        {/* ── Messages (grows to fill available space) ── */}
+        <div
+          id="messages"
+          className="flex-1 flex flex-col-reverse gap-y-1 overflow-y-auto px-3 py-3 min-h-0"
+        >
+          <MessageBox />
+
+          {/* Hidden file input */}
+          <input
+            type="file"
+            multiple
+            accept="image/*,video/*"
+            ref={fileRef}
+            onChange={handleFileChange}
+            className="hidden"
+          />
+        </div>
+
+        {/* ── Image previews (shown above toolbar) ── */}
+        {images.length > 0 && (
+          <div className="flex-shrink-0 flex flex-wrap gap-2 px-4 pt-2 pb-1 bg-white border-t border-gray-100">
+            {images.map((image, index) => (
+              <div
+                key={index}
+                className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border border-gray-200 shadow-sm"
+              >
+                {image.preview ? (
+                  <img src={image.url} alt="preview" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-500">
+                    <svg className="w-8 h-8" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                      <path d="M15 2v5h5v15h-16v-20h11zm1-2h-14v24h20v-18l-6-6z" />
+                    </svg>
+                  </div>
+                )}
+                <button
+                  onClick={() => removeImage(index)}
+                  className="absolute top-0.5 right-0.5 w-5 h-5 text-white bg-red-500 rounded-full flex items-center justify-center text-xs font-bold"
                 >
-                  <path d="M15 2v5h5v15h-16v-20h11zm1-2h-14v24h20v-18l-6-6z" />
-                </svg>
+                  ×
+                </button>
+                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[9px] text-center py-0.5 truncate px-0.5">
+                  {image.size}
+                </div>
               </div>
-            )}
-
-            {/* Delete button */}
-            <button
-              onClick={() => removeImage(index)}
-              className="absolute top-1 right-1 w-6 h-6 text-white bg-red-500 rounded-full flex items-center justify-center"
-            >
-              ×
-            </button>
-
-            {/* Size text */}
-            <div className="absolute bottom-0 bg-black bg-opacity-50 text-white text-xs w-full text-center py-1">
-              {image.size}
-            </div>
+            ))}
           </div>
-        ))}
+        )}
+
+        {/* ── Input toolbar ── */}
+        <div className="flex-shrink-0 border-t border-gray-200 bg-white px-3 py-2">
+          <form onSubmit={SendMessage}>
+            <div className="flex items-center gap-1">
+
+              {/* Mic button */}
+              <button type="button" className={iconBtn} title="Voice">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="h-5 w-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                </svg>
+              </button>
+
+              {/* Text input (grows) */}
+              <input
+                type="text"
+                name="message"
+                ref={inputRef}
+                placeholder="Message..."
+                className="flex-1 min-w-0 bg-gray-100 rounded-full px-4 py-2.5 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition-all"
+              />
+
+              {/* Emoji toggle — with floating picker on desktop */}
+              <div className="relative" ref={emojiBtnRef}>
+                <button
+                  type="button"
+                  onClick={handleEmojiToggle}
+                  className={`${iconBtn} ${isShowingEmoji ? 'text-indigo-500 bg-indigo-50' : ''}`}
+                  title="Emoji"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="h-5 w-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </button>
+
+                {/* Floating emoji picker — desktop only */}
+                {isShowingEmoji && (
+                  <div className="absolute bottom-12 right-0 z-50 shadow-2xl rounded-2xl overflow-hidden">
+                    <Picker onEmojiClick={onEmojiClick} height={380} width={320} />
+                  </div>
+                )}
+              </div>
+
+              {/* Attach / camera */}
+              <button
+                type="button"
+                onClick={() => fileRef.current.click()}
+                className={iconBtn}
+                title="Attach photo"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="h-5 w-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </button>
+
+              {/* Send button */}
+              <button
+                type="submit"
+                className="inline-flex items-center justify-center rounded-full h-9 w-9 bg-indigo-500 hover:bg-indigo-600 active:scale-95 transition-all duration-200 text-white shadow-md focus:outline-none flex-shrink-0"
+                title="Send"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 rotate-90">
+                  <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                </svg>
+              </button>
+
             </div>
-           
+          </form>
+        </div>
 
-           
-         <input type="text" name='message' placeholder="Write your message!" className="w-full focus:outline-none focus:placeholder-gray-400 text-gray-600 placeholder-gray-600 pl-12 bg-gray-200 rounded-md py-3" />
-         <div className="absolute right-0 items-center inset-y-0 hidden sm:flex">
-            <button type="button" className="inline-flex items-center justify-center rounded-full h-10 w-10 transition duration-500 ease-in-out text-gray-500 hover:bg-gray-300 focus:outline-none">
-               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="h-6 w-6 text-gray-600">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
-               </svg>
-            </button>
-            <button type="button" onClick={()=>fileRef.current.click()} className="inline-flex items-center justify-center rounded-full h-10 w-10 transition duration-500 ease-in-out text-gray-500 hover:bg-gray-300 focus:outline-none">
-               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="h-6 w-6 text-gray-600">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
-               </svg>
-            </button>
-            
-            <button type="button" onClick={() => setIsShowingSidebar(!isShowingSidebar)} className="inline-flex items-center justify-center rounded-full h-10 w-10 transition duration-500 ease-in-out text-gray-500 hover:bg-gray-300 focus:outline-none">
-               
-               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="h-6 w-6 text-gray-600">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-               </svg>
-            </button>
-            <button type="submit" 
-            
-            className="inline-flex items-center justify-center rounded-lg px-4 py-3 transition duration-500 ease-in-out text-white bg-blue-500 hover:bg-blue-400 focus:outline-none" >
-               <span className="font-bold">Send</span>
-               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-6 w-6 ml-2 transform rotate-90">
-                  <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path>
-               </svg>
-            </button>
-         </div>
       </div>
-      </form>
-   </div>
-</div>
-
-
-
-
-        </>
-    )
-
-}
+    </>
+  );
+};
 
 export default ChatWindow;

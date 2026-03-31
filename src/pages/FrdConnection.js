@@ -1,17 +1,16 @@
 import React from 'react';
-import Headers from '../component/Header';
-import SidebarList from '../component/SidebarList';
 import FriendList from '../component/friends/FriendList';
 
+/**
+ * /friends/list route page
+ * Delegates all layout to FriendList which handles desktop/mobile split.
+ */
 const FrdConnection = () => {
   return (
-    <>
-    <div className=" bg-gray-100 flex justify-center items-center">
+    <div className="h-full w-full flex overflow-hidden bg-gray-50">
       <FriendList />
     </div>
-    </>
-  )
-}
-
+  );
+};
 
 export default FrdConnection;
