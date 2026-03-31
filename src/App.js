@@ -109,12 +109,13 @@ function AppContent() {
   }, [fetchUser]);
   return (
    <>
-    <div className="flex flex-row ">
-      {/* ✅ Sidebar only if logged in */}
+    {/* Full-height layout: sidebar (desktop) + content */}
+    <div className="flex flex-row h-full overflow-hidden">
+      {/* ✅ Sidebar/bottom-nav only if logged in */}
       {user && !hideSidebar && <Navbar />}
 
-      {/* Main content area */}
-      <div className="flex-1 h-screen ">
+      {/* Main content area — on mobile add bottom padding so content clears the fixed bottom nav */}
+      <div className="flex-1 h-full overflow-hidden pb-16 md:pb-0">
         <Routes>
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
@@ -141,10 +142,6 @@ function AppContent() {
         </Routes>
       </div>
     </div>
-   
-    
-
-
    </>
   );
 }
