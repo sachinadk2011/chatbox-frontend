@@ -19,7 +19,8 @@ export const MessageState = (props) => {
         receiverName: " ",
         senderName: " " ,
         lastActive: null,
-        onlineStatus: false
+        onlineStatus: false,
+        profile_url: null
       });
 
       

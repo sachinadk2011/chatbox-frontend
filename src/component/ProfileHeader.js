@@ -11,6 +11,13 @@ const ProfileHeader = () => {
    const { friends } = useContext(FriendsContext);
    console.log("pp: "+ JSON.stringify(Selecteduser));
    console.log("pp: "+  Selecteduser);
+
+   let profile_url = `https://ui-avatars.com/api/?name=${Selecteduser.receiverName}&background=random&color=random&bold=true&rounded=true`
+  const resizedUrl = Selecteduser.profile_url? Selecteduser.profile_url.replace(
+  "/upload/",
+  "/upload/w_200,h_200,c_fill,g_face/"
+): false;
+console.log("sidebar resizedUrl: ",resizedUrl );
     return(
          <>
         <div className="relative flex items-center space-x-4">
@@ -23,7 +30,7 @@ const ProfileHeader = () => {
                <LastActive timestamp={Selecteduser.lastActive} />
                </span>}
             </span>
-         <img src={`https://ui-avatars.com/api/?name=${Selecteduser.receiverName}&background=random&color=random&bold=true&rounded=true`} alt="" className="w-10 sm:w-16 h-10 sm:h-16 rounded-full" />
+         <img src={resizedUrl || profile_url} alt="" className="w-10 sm:w-16 h-10 sm:h-16 rounded-full" />
          </div>
          <div className="flex flex-col leading-tight">
             <div className="text-2xl mt-1 flex items-center">

@@ -102,7 +102,8 @@ const SidebarList = () => {
               senderId: JSON.parse(localStorage.getItem('user')).id,              // your id
               senderName: JSON.parse(localStorage.getItem('user')).name,           // your name
               lastActive: friend.lastActive,
-              onlineStatus: friend.onlineStatus
+              onlineStatus: friend.onlineStatus,
+              profile_url: friend.profile_Url
   });
   
         

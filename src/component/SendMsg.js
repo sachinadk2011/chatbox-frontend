@@ -68,7 +68,7 @@ if (types === "multiple") {
                   
                 } </span></div>
             </div>
-            <img src={`https://ui-avatars.com/api/?name=${user.name}&background=random&color=random&bold=true&rounded=true`} alt="My profile" className="w-6 h-6 rounded-full order-2" />
+            <img src={user.profile_Url || `https://ui-avatars.com/api/?name=${user.name}&background=random&color=random&bold=true&rounded=true`} alt="My profile" className="w-6 h-6 rounded-full order-2" />
          </div>
       </div>
     </>

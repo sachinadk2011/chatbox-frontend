@@ -4,6 +4,12 @@ import MessageContext from '../context/message/MessageContext';
 export const ReceivedMsg = ({ types,  received }) => {
   const { Selecteduser } = useContext(MessageContext);
   let filesArray = [];
+  let profile_url = `https://ui-avatars.com/api/?name=${Selecteduser.receiverName}&background=random&color=random&bold=true&rounded=true`
+  const resizedUrl = Selecteduser.profile_url? Selecteduser.profile_url.replace(
+  "/upload/",
+  "/upload/w_200,h_200,c_fill,g_face/"
+): false;
+console.log("sidebar resizedUrl: ",resizedUrl );
 
 if (types === "multiple") {
   try {
@@ -68,7 +74,7 @@ if (types === "multiple") {
                 }
                 </span></div>
             </div>
-            <img src={`https://ui-avatars.com/api/?name=${Selecteduser.receiverName}&background=random&color=random&bold=true&rounded=true`} alt="My profile" className="w-6 h-6 rounded-full order-1" />
+            <img src={resizedUrl || profile_url} alt="My profile" className="w-6 h-6 rounded-full order-1" />
          </div>
       </div>
     </>
