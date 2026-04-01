@@ -1,171 +1,153 @@
 import MessageContext from "./MessageContext";
-import React, { useState, useCallback, useContext, useEffect } from 'react';
-
+import React, { useState, useCallback, useContext, useEffect, useRef } from 'react';
 import UserContext from "../users/UserContext";
-import socket from "../../server/socket"; 
+import socket from "../../server/socket";
 import { api } from '../../utils/SetAuthToken';
-import LastActive from "../../utils/lastactive";
 
 export const MessageState = (props) => {
-   ;
-    const { user } = useContext(UserContext);
-    
+  const { user } = useContext(UserContext);
+  const [messages, setMessages] = useState([]);
+  const [drafts, setDraftsState] = useState({});  // { [receiverId]: draftText }
+  const joinedRef = useRef(false);
 
-    const [messages, setMessages] = useState([]); // Example state for messages
-    const [Selecteduser, setSelectedUser] = useState(
-      {
-        receiverId: null,
-        senderId: null,
-        receiverName: " ",
-        senderName: " " ,
-        lastActive: null,
-        onlineStatus: false,
-        profile_url: null
-      });
-
-      
-
-      // inside component or hook:
-useEffect(() => {
-  socket.on("receiveMessage", (msg) => {
-    console.log("Received via socket:", msg);
-    setMessages(prevMessages =>{
-           // determine friend ID safely
-      const frdId = msg.sender?._id === user?.id 
-        ? msg.receiver?._id.toString() 
-        : msg.sender?._id.toString();
-
-  // clone old state
-  let updated = [...prevMessages];
-  
-  // find chat with that friend
-  let existing = updated.find(item => item.otherUserId === frdId);
-
-  if (existing) {
-    if(!existing.messages.some(m => m._id === msg._id)) {
-      existing.messages = [...existing.messages, msg];
-    }
-  } else {
-    // create new chat if not exists
-    updated.push({ otherUserId: frdId, messages: [msg] });
-  }
-
-  return updated;
-});
+  const [Selecteduser, setSelectedUser] = useState({
+    receiverId: null, senderId: null,
+    receiverName: " ", senderName: " ",
+    lastActive: null, onlineStatus: false, profile_url: null
   });
-  return () => {
-    socket.off("receiveMessage");
-  };
-}, []);
 
-useEffect(() => {
-  if (!socket.connected) return;
-
-  let idleTimer;
-  const idleLimit =  5 * 60 *1000; // 5 min
-
-  const resetIdleTimer = () => {
-    clearTimeout(idleTimer);
-    idleTimer = setTimeout(() => {
-      console.log("User idle, disconnecting socket...");
-      socket.disconnect(); // triggers server-side disconnect
-    }, idleLimit);
-  };
-
-  window.addEventListener("mousemove", resetIdleTimer);
-  window.addEventListener("keydown", resetIdleTimer);
-  window.addEventListener("scroll", resetIdleTimer);
-
-  resetIdleTimer();
-
-  return () => {
-    clearTimeout(idleTimer);
-    window.removeEventListener("mousemove", resetIdleTimer);
-    window.removeEventListener("keydown", resetIdleTimer);
-    window.removeEventListener("scroll", resetIdleTimer);
-  };
-}, [socket.connected]);
-
-
-useEffect(() => {
-  if (!user?.id) return; // wait until user ID is available
-
-  const handleConnect = () => {
-    const token = localStorage.getItem("token");
-    if (token ) {
-      socket.emit("joinRoom", user.id);
+  // ── Connect + join room once user.id is known ──────────────────────────────
+  useEffect(() => {
+    if (!user?.id) return;
+    const doJoin = () => { socket.emit("joinRoom", user.id); joinedRef.current = true; };
+    if (!socket.connected) {
+      socket.connect();
+      socket.once("connect", doJoin);
+    } else if (!joinedRef.current) {
+      doJoin();
     }
-  };
+    return () => socket.off("connect", doJoin);
+  }, [user?.id]);
 
-  socket.on("connect", handleConnect);
+  // ── Re-join after reconnect (Render wake-up) ───────────────────────────────
+  useEffect(() => {
+    const onReconnect = () => { if (user?.id) socket.emit("joinRoom", user.id); };
+    socket.on("connect", onReconnect);
+    return () => socket.off("connect", onReconnect);
+  }, [user?.id]);
 
-  const interval = setInterval(() => {
-    if (user?.id) socket.emit("alive");
-  }, 10000);
+  // ── Keep-alive ping ────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!user?.id) return;
+    const iv = setInterval(() => { if (socket.connected) socket.emit("alive"); }, 10000);
+    return () => clearInterval(iv);
+  }, [user?.id]);
 
-  return () => {
-    socket.off("connect", handleConnect);
-    clearInterval(interval);
-  };
-}, [user?.id]);
-
-
-
-
-
-
-    // fetch all messages
-    const fetchMessages = useCallback(async () => {
-        try {
-            const response = await api.get('/api/messages/fetchallmessages');
-           
-            const msg = response.data.messages;
-           
-            return msg;
-            
-        } catch (error) {
-          
-            console.error("Error fetching messages:",  error.message, error.status);
-            throw error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" };
+  // ── Receive incoming messages ──────────────────────────────────────────────
+  useEffect(() => {
+    const handler = (msg) => {
+      const frdId = msg.sender?._id?.toString() === user?.id?.toString()
+        ? msg.receiver?._id?.toString()
+        : msg.sender?._id?.toString();
+      setMessages(prev => {
+        let updated = [...prev];
+        let chat = updated.find(c => c.otherUserId === frdId);
+        if (chat) {
+          if (!chat.messages.some(m => m._id === msg._id)) {
+            chat = { ...chat, messages: [...chat.messages, msg] };
+            updated = updated.map(c => c.otherUserId === frdId ? chat : c);
+          }
+        } else {
+          updated.push({ otherUserId: frdId, messages: [msg] });
         }
-    }, []);
-
-    //send a message
-    const sendMessage = async (formData) => {
-        try {
-          
-            const response = await api.post('/api/messages/sendmessage', formData
-            );
-            if (!response.data.success) {
-              throw new Error(response.data.error || 'Message sending failed');
-            }
-           
-
-            socket.emit("sendMessage", response.data.message);
-
-            
-          } catch (error) {
-          console.error("Error sending message error:", error);
-          console.error("Error sending message error.error:",  error.error);
-          console.error("Error sending message error.message:",  error.message);
-
-         throw error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" };
-        }
+        return updated;
+      });
     };
+    socket.on("receiveMessage", handler);
+    return () => socket.off("receiveMessage", handler);
+  }, [user?.id]);
 
-    //marksasread a message
-    const markAsRead = async (senderId) => {
-        try {
-             await api.put(`/api/messages/markasread/${senderId}`);
+  // ── messagesRead → turn ticks blue ────────────────────────────────────────
+  useEffect(() => {
+    const handler = ({ by }) => {
+      setMessages(prev => prev.map(chat => ({
+        ...chat,
+        messages: chat.messages.map(m =>
+          m.sender?._id?.toString() === user?.id?.toString()
+            && m.receiver?._id?.toString() === by?.toString()
+            ? { ...m, status: 'read' }
+            : m
+        )
+      })));
+    };
+    socket.on("messagesRead", handler);
+    return () => socket.off("messagesRead", handler);
+  }, [user?.id]);
 
-        } catch (error) {
-            console.error("Error marking message as read:", error);
-            throw error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" };
+  // ── Fetch all (for sidebar preview) ───────────────────────────────────────
+  const fetchMessages = useCallback(async () => {
+    const response = await api.get('/api/messages/fetchallmessages');
+    return response.data.messages;
+  }, []);
+
+  // ── Fetch paginated conversation ───────────────────────────────────────────
+  const fetchConversation = useCallback(async (otherUserId, page = 1, limit = 20) => {
+    const response = await api.get(`/api/messages/conversation/${otherUserId}?page=${page}&limit=${limit}`);
+    return response.data; // { messages, hasMore, page }
+  }, []);
+
+  // ── Send message (optimistic) ──────────────────────────────────────────────
+  const sendMessage = async (formData) => {
+    const response = await api.post('/api/messages/sendmessage', formData);
+    if (!response.data.success) throw new Error(response.data.error);
+    const saved = response.data.message;
+    // Optimistic: add to context so sidebar preview updates
+    setMessages(prev => {
+      const frdId = saved.receiver?._id?.toString();
+      let updated = [...prev];
+      let chat = updated.find(c => c.otherUserId === frdId);
+      if (chat) {
+        if (!chat.messages.some(m => m._id === saved._id)) {
+          chat = { ...chat, messages: [...chat.messages, saved] };
+          updated = updated.map(c => c.otherUserId === frdId ? chat : c);
         }
-    }; 
+      } else {
+        updated.push({ otherUserId: frdId, messages: [saved] });
+      }
+      return updated;
+    });
+    // Emit to receiver's socket room
+    socket.emit("sendMessage", saved);
+    return saved;
+  };
 
-    return (
-    <MessageContext.Provider value={{ messages,setMessages, Selecteduser, setSelectedUser, fetchMessages, sendMessage, markAsRead }}>
+  // ── Draft helpers ────────────────────────────────────────────────────
+  const setDraft = useCallback((receiverId, text) => {
+    if (!receiverId) return;
+    setDraftsState(prev => {
+      if (text) return { ...prev, [receiverId]: text };
+      const next = { ...prev };
+      delete next[receiverId];
+      return next;
+    });
+  }, []);
+
+  // ── Mark as read ───────────────────────────────────────────────────────────
+  const markAsRead = async (senderId) => {
+    if (!senderId) return;
+    try {
+      await api.put(`/api/messages/markasread/${senderId}`);
+      socket.emit("markRead", { senderId, receiverId: user?.id });
+    } catch (e) { /* silent */ }
+  };
+
+  return (
+    <MessageContext.Provider value={{
+      messages, setMessages,
+      Selecteduser, setSelectedUser,
+      fetchMessages, fetchConversation, sendMessage, markAsRead,
+      drafts, setDraft,
+    }}>
       {props.children}
     </MessageContext.Provider>
   );

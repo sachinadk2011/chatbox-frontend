@@ -107,11 +107,10 @@ const SignUp = () => {
         .su-right {
           flex: 1;
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           justify-content: center;
           padding: 48px 24px;
           min-width: 0;
-          overflow-y: auto;
         }
 
         /* ── Card ── */
@@ -204,7 +203,7 @@ const SignUp = () => {
         }
       `}</style>
 
-      <div className="su-page">
+      <div className="su-page auth-page">
         {/* Left panel */}
         <div className="su-left">
           <div className="su-left-overlay" />

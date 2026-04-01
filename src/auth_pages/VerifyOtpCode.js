@@ -259,7 +259,7 @@ const VerificationCode = () => {
         }
       `}</style>
 
-      <div className="otp-page">
+      <div className="otp-page auth-page">
         <div className="otp-card">
           {/* Icon */}
           <div className="otp-icon-wrap">

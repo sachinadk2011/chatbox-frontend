@@ -18,27 +18,28 @@ const setupAxiosInterceptors = (navigate, RefreshToken) => {
     async (error) => {
       if (error.response && error.response.status === 401) {
         const originalRequest = error.config;
-      if (error.response?.status === 401 && !originalRequest._retry) {
-        originalRequest._retry = true;
-        try {
-          const newToken = await RefreshToken();
-          if (newToken) {
-            localStorage.setItem("token", newToken);
-            SetAuthToken(newToken);
-            originalRequest.headers["auth-token"] = newToken;
-            return api(originalRequest);
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          originalRequest._retry = true;
+          try {
+            const newToken = await RefreshToken();
+            if (newToken) {
+              localStorage.setItem("token", newToken);
+              SetAuthToken(newToken);
+              originalRequest.headers["auth-token"] = newToken;
+              return api(originalRequest);
+            }
+          } catch (err) {
+            console.log("Refresh token failed:", err);
           }
-        } catch (err) {
-          console.log("Refresh token failed:", err);
         }
+        // Refresh failed — log out
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        SetAuthToken(null);
+        navigate("/login");
       }
-      // if refresh fails, log out
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      SetAuthToken(null);
-      navigate("/login");
+      // ── MUST always reject so callers get the error, not undefined ──
       return Promise.reject(error);
-    }
     }
   );
 };

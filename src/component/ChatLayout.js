@@ -33,15 +33,7 @@ const ChatLayout = () => {
   const handleBack = () => setSelectedUser(EMPTY_USER);
 
   return (
-    /*
-      Use 100dvh (dynamic viewport height) so the layout shrinks correctly
-      when the mobile soft keyboard opens, keeping the input bar visible.
-      Fall back to 100% (which is constrained by the parent).
-    */
-    <div
-      className="flex w-full overflow-hidden bg-gray-50"
-      style={{ height: '100dvh', maxHeight: '100%' }}
-    >
+    <div className="flex w-full h-full overflow-hidden bg-gray-50">
 
       {/* ══ PANEL 1 — Sidebar / friend list ══
           • Desktop: always shown, fixed width

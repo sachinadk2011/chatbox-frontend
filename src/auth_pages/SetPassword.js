@@ -229,7 +229,7 @@ const SetPassword = () => {
         }
       `}</style>
 
-      <div className="sp-page">
+      <div className="sp-page auth-page">
         <div className="sp-card">
 
           {/* ── Success screen ── */}

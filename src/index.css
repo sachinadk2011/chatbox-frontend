@@ -26,6 +26,7 @@
 html, body {
   margin: 0;
   padding: 0;
+  height: 100%;          /* needed so h-full chain works from root */
 }
 
 /* Auth pages (login/signup/otp) need free scrolling */
@@ -40,12 +41,30 @@ body {
 }
 
 /* Auth layout override — allow scrolling on mobile */
-body:has(.auth-page) {
+body:has(.auth-page, .su-page, .otp-page, .fp-page, .sp-page) {
   overflow: auto;
 }
-body:has(.auth-page) #root {
+body:has(.auth-page, .su-page, .otp-page, .fp-page, .sp-page) #root {
   height: auto;
   overflow: visible;
+}
+
+/*
+  Global auth-page scroll fix.
+  SignUp / OTP / SetPassword etc. all define their root container
+  with inline <style> blocks. Some accidentally place `overflow: hidden`
+  (the shorthand) AFTER `overflow-y: auto`, which resets the y-axis
+  back to hidden. This rule wins last and keeps them scrollable.
+*/
+.auth-page,
+.su-page,
+.otp-page,
+.fp-page,
+.sp-page,
+.ue-page {
+  overflow-y: auto !important;  /* must scroll vertically on small screens */
+  overflow-x: hidden;           /* no horizontal bleed */
+  min-height: 100dvh;           /* at least full viewport, grows with content */
 }
 
 body {

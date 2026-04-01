@@ -125,7 +125,7 @@ const UpdateEmail = () => {
         }
       `}</style>
 
-      <div className="fp-page">
+      <div className="fp-page auth-page">
         <div className="fp-card">
           <div className="fp-icon-wrap">
             <div className="fp-icon-ring">🔑</div>

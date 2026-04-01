@@ -72,11 +72,17 @@ const SidebarList = () => {
   let previewText = "Tap to start messaging";
 
   if (chat && chat.messages.length > 0) {
-    const lastMessage = chat.messages[chat.messages.length - 1]; // last message object
+    const lastMessage = chat.messages[chat.messages.length - 1];
     const isYou = lastMessage.sender._id === user?.id;
-
-    // Use .message field (text), not the whole object
-    previewText = (isYou ? "You: " : "") + (lastMessage.message.length < 20 ? lastMessage.message : lastMessage.message.slice(0, 20) + '...');
+    const rawText = lastMessage.message ?? ''; // guard against null
+    // For media messages show a label instead of URL
+    const msgTypes = lastMessage.types || 'text';
+    let displayText;
+    if (msgTypes === 'image')    displayText = '📷 Photo';
+    else if (msgTypes === 'video') displayText = '🎥 Video';
+    else if (msgTypes === 'multiple') displayText = '📎 Attachments';
+    else displayText = rawText.length < 30 ? rawText : rawText.slice(0, 30) + '...';
+    previewText = (isYou ? 'You: ' : '') + displayText;
   }
 
   return {
@@ -113,7 +119,7 @@ const SidebarList = () => {
     
     return(
         <>
-          <div className="overflow-y-auto h-screen p-3 mb-9 pb-20"  >
+              <div className="overflow-y-auto h-full p-3 pb-4">
           {friends.map((element)=>{
             return(
             <div key={element._id} className="flex items-center mb-4 cursor-pointer hover:bg-gray-100 p-2 rounded-md">
