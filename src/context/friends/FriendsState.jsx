@@ -18,7 +18,7 @@ export const FriendsState = (props) => {
             return response.data.friends;
         } catch (error) {
             console.error("Error fetching friends:", error, error.message );
-            throw error.response?.data.error || error.response?.data.message||error.message || { success: false, message:error.error || "Something went wrong" };
+            throw new Error( error.response?.data.error || error.response?.data.message||error.message || { success: false, message:error.error || "Something went wrong" });
         }
     }, []);
 
@@ -30,7 +30,7 @@ export const FriendsState = (props) => {
             return response.data;
         } catch (error) {
             console.error("Error fetching received friend requests:",  error.response?.data.error || error.response?.data.message);
-            throw error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" };
+            throw new Error( error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" });
         }
     }, [])
 
@@ -42,7 +42,7 @@ export const FriendsState = (props) => {
             console.log(response.data.suggestionFriends);
         } catch (error) {
             console.error("Error fetching suggested friends:", error);
-            throw error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" };
+            throw new Error( error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" });
         }
     }, []);
 
@@ -54,7 +54,7 @@ export const FriendsState = (props) => {
             return response.data;
         } catch (error) {
             console.error("Error handling friend request:", error);
-            throw error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" };
+            throw new Error( error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" });
         }
     };
 
@@ -66,7 +66,7 @@ export const FriendsState = (props) => {
             return response.data;
         } catch (error) {
             console.error("Error fetching sent friend requests:", error);
-            throw error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" };
+            throw new Error( error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" });
         }
     }, [])
 
@@ -77,7 +77,7 @@ export const FriendsState = (props) => {
             return response.data;
         } catch (error) {
             console.error("Error sending friend request:", error.response.data.error , error.response.data.message);
-            throw error.response?.data.error || error.response.data.message || { success: false, message:error.error || "Something went wrong" };
+            throw new Error( error.response?.data.error || error.response.data.message || { success: false, message:error.error || "Something went wrong" });
         }
     };
 
@@ -89,7 +89,7 @@ export const FriendsState = (props) => {
             return response.data;
         } catch (error) {
             console.error("Error cancelling friend request:", error);
-            throw error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" };
+            throw new Error( error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" });
         }  
     };                         
 

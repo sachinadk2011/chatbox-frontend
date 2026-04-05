@@ -35,7 +35,7 @@ export const UserState = (props) => {
 
     return response.data;
     }catch(error){
-  throw error.response?.data.error || error.response?.data.message || error.message || { success: false, message: error.error || "Something went wrong" };
+  throw new Error( error.response?.data.error || error.response?.data.message || error.message || { success: false, message: error.error || "Something went wrong" });
 }
   
 
@@ -54,7 +54,7 @@ export const UserState = (props) => {
     return response.data;
   
 }catch(error){
-  throw error.response?.data.error || error.response?.data.message || error.message || { success: false, message: error.error || "Something went wrong" };
+  throw new Error( error.response?.data.error || error.response?.data.message || error.message || { success: false, message: error.error || "Something went wrong" });
 }
   }
 
@@ -66,7 +66,7 @@ const googleLogin = async()=>{
 
     return response.data;
   } catch (error) {
-    throw error.response?.data.error || error.response?.data.message || error.message || { success: false, message: error.error || "Something went wrong" };
+    throw new Error( error.response?.data.error || error.response?.data.message || error.message || { success: false, message: error.error || "Something went wrong" });
   } 
 }
 
@@ -93,7 +93,7 @@ const googleLogin = async()=>{
       return response.data;
     } catch (error) {
       
-      throw error.response?.data.error || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" };
+      throw new Error( error.response?.data.error || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" });
 
   }
 }
@@ -105,7 +105,7 @@ const googleLogin = async()=>{
       
     } catch (error) {
       console.error("Error refreshing token:", error);
-      throw error.response?.data.error||error.response?.data.msg || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" };
+      throw new Error( error.response?.data.error||error.response?.data.msg || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" });
     }
   })
 
@@ -124,7 +124,7 @@ const googleLogin = async()=>{
       
     } catch (error) {
       console.error("Error during logout:", error);
-      throw error.response?.data.error || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" };
+      throw new Error( error.response?.data.error || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" });
       
     }
   }
@@ -137,7 +137,7 @@ const googleLogin = async()=>{
       
     } catch (error) {
       console.error("Error verifying OTP:", error);
-      throw error.response?.data.error || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" };
+      throw new Error( error.response?.data.error || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" });
       
     }
   }
@@ -150,7 +150,7 @@ const googleLogin = async()=>{
       
     } catch (error) {
       console.error("Error resending OTP:", error);
-      throw error.response?.data.error || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" };
+      throw new Error( error.response?.data.error || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" });
       
     }
   }
@@ -163,7 +163,7 @@ const googleLogin = async()=>{
       
     } catch (error) {
       console.error("Error resending OTP:", error);
-      throw error.response?.data.error || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" };
+      throw new Error( error.response?.data.error || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" });
     }
   }
 
@@ -175,9 +175,9 @@ const googleLogin = async()=>{
     } catch (error) {
       console.error("Error setting password:", error);
       if (error.response?.status === 400) {
-        throw {errors: error.response?.data.errors , msg: error.response?.data.message };
+        throw new Error( {errors: error.response?.data.errors , msg: error.response?.data.message });
       }
-      throw error.response?.data.error || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" };
+      throw new Error( error.response?.data.error || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" });
     }
   }
 
