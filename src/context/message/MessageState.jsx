@@ -99,7 +99,7 @@ export const MessageState = (props) => {
   // ── Send message (optimistic) ──────────────────────────────────────────────
   const sendMessage = async (formData) => {
     const response = await api.post('/api/messages/sendmessage', formData);
-    if (!response.data.success) throw new Error(response.data.error);
+    if (!response.data.success) throw new Error( response.data.error);
     const saved = response.data.message;
     // Optimistic: add to context so sidebar preview updates
     setMessages(prev => {

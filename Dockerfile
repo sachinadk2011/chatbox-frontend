@@ -13,12 +13,11 @@ RUN npm install --legacy-peer-deps
 # Copy the rest of the source
 COPY . .
 
-# Expose the CRA dev server port
-EXPOSE 3000
+# Expose the Vite dev server port
+EXPOSE 5173
 
 # Start the dev server
 # CHOKIDAR_USEPOLLING is required for file-watch to work inside Docker on Windows
 ENV CHOKIDAR_USEPOLLING=true
-ENV WDS_SOCKET_PORT=0
 
-CMD ["npm", "start"]
+CMD ["npm", "run", "dev"]
