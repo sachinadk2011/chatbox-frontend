@@ -16,7 +16,10 @@ const SetPassword = () => {
 
   useEffect (()=>{
     if (!email){
+      setErrorMessages(["Invalid Request."]);
+      setTimeout(() => {
       navigate("/login");
+      }, 3000);
       return;
     }
     let cancelled = false; // ✅ declare here
@@ -79,7 +82,8 @@ const SetPassword = () => {
     }
     setLoading(true);
     try {
-      await setPassword(email, newPassword);
+      const result = await setPassword(email, newPassword);
+      localStorage.removeItem("tempData");
       setDone(true);
       setTimeout(() => navigate("/login"), 2200);
     } catch (error) {
