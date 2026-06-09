@@ -63,7 +63,10 @@ const VerificationCode = () => {
         navigate("/set-new-password");
       }
     } catch (err) {
-      setError("Invalid or expired code. Please try again.");
+      console.error("otp: ", err.message );
+      setError(err.message ||"Invalid or expired code. Please try again.");
+      setOtpCode(Array(6).fill(""));
+      document.getElementById("otp-0")?.focus();
     } finally {
       setLoading(false);
     }
@@ -72,12 +75,15 @@ const VerificationCode = () => {
   const handleResend = async () => {
     setResending(true); setError(""); setSuccess("");
     try {
-      await resendOtp(email);
-      setSuccess("New code sent! Check your inbox.");
+      const res = await resendOtp(email);
+      setSuccess(res.message ||"New code sent! Check your inbox.");
       setOtpCode(Array(6).fill(""));
       document.getElementById("otp-0")?.focus();
-    } catch {
-      setError("Failed to resend code. Please try again.");
+    } catch (err) {
+      setError(err.message ||"Failed to resend code. Please try again.");
+      // reseting otp code input 
+      setOtpCode(Array(6).fill(""));
+      document.getElementById("otp-0")?.focus();
     } finally {
       setResending(false);
     }

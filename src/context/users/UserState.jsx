@@ -167,6 +167,18 @@ const googleLogin = async()=>{
     }
   }
 
+  const CheckPasswordResetRequest = async(email)=>{
+    try{
+      const res =  await api.get('api/auth/checkverification', {params: {email}});
+      console.log("CheckPasswordResetRequest response:", res.data);
+      return res.data;
+    }
+    catch(error){
+      console.error("Error checking password reset request:", error);
+      throw { errors: error.response?.data.errors, msg: error.response?.data.message || "something went wrong" };
+    }
+  }
+
   const setPassword = async(email, newPassword, oldPassword=null)=>{
     try {
       const response = await api.post('/api/auth/resetpassword', {email, newPassword, oldPassword });
@@ -182,7 +194,7 @@ const googleLogin = async()=>{
   }
 
   return (
-    <UserContext.Provider value={{ login, signup, getUser, user, setUser, googleLogin, RefreshToken, logout, verifyOtp, resendOtp, forgetPassword, setPassword }}>
+    <UserContext.Provider value={{ login, signup, getUser, user, setUser, googleLogin, RefreshToken, logout, verifyOtp, resendOtp, forgetPassword, setPassword, CheckPasswordResetRequest }}>
       {props.children}
     </UserContext.Provider>
   );

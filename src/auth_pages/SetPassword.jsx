@@ -1,9 +1,9 @@
-import { useContext, useState } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import UserContext from '../context/users/UserContext';
 import { useNavigate } from "react-router-dom";
 
 const SetPassword = () => {
-  const { setPassword } = useContext(UserContext);
+  const { setPassword, CheckPasswordResetRequest } = useContext(UserContext);
   let navigate = useNavigate();
   const [errorMessages, setErrorMessages] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -14,6 +14,43 @@ const SetPassword = () => {
   const [done, setDone] = useState(false);
   const email = JSON.parse(localStorage.getItem("tempData"))?.email || "";
 
+  useEffect (()=>{
+    if (!email){
+      navigate("/login");
+      return;
+    }
+    let cancelled = false; // ✅ declare here
+    // check if user has verified otp and is allowed to reset password
+    const checkRequest = async () => {
+      try {
+        const result = await CheckPasswordResetRequest(email);
+
+        if (cancelled) return;
+         if (!result.success){
+          console.error("not authorized to reset password: ", result.message);
+          setErrorMessages([result.message || "You are not authorized to set a new password. Please verify your email first."]);
+           setTimeout(() => {
+             localStorage.removeItem("tempData");
+             navigate("/forget-password");
+             
+           }, 3000);
+
+         }
+      } catch (error) {
+        if (cancelled) return;
+        console.error("error checking pw: ", error)
+        setErrorMessages([error?.msg || error?.error || "Something went wrong. Please try again."]);
+        setTimeout(() => {
+          
+          navigate("/verify-otp");
+        }, 3000);
+      }
+    };
+    checkRequest();
+
+    return () => { cancelled = true; };
+
+  }, [email, navigate])
   const checks = [
     { icon: '📏', label: 'At least 8 characters',        pass: newPassword.length >= 8 },
     { icon: '🔠', label: 'At least 1 uppercase (A–Z)',    pass: /[A-Z]/.test(newPassword) },
@@ -46,9 +83,16 @@ const SetPassword = () => {
       setDone(true);
       setTimeout(() => navigate("/login"), 2200);
     } catch (error) {
-      if (Array.isArray(error.errors)) setErrorMessages(error.errors);
-      else if (error.msg) setErrorMessages([error.msg]);
-      else setErrorMessages(["Something went wrong. Please try again."]);
+      if (Array.isArray(error.errors)) {
+        console.error("Validation errors:", error.errors);
+        setErrorMessages(error.errors);}
+      else if (error.msg) {
+        console.error("Error message:", error.msg);
+        setErrorMessages([error.msg]);}
+      else {
+        console.error("Unexpected error:", error);
+        setErrorMessages([ error?.message || error?.error || "Something went wrong. Please try again."]);
+      }
     } finally {
       setLoading(false);
     }

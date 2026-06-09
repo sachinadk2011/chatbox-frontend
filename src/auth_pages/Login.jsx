@@ -29,7 +29,7 @@ const Login = () => {
       setUser(userdata.user);
       navigate("/");
     } catch (err) {
-      setError("Google login failed. Please try again.");
+      setError(err.message || "Google login failed. Please try again.");
     }
   };
 
