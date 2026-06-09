@@ -30,9 +30,9 @@ const SetPassword = () => {
           console.error("not authorized to reset password: ", result.message);
           setErrorMessages([result.message || "You are not authorized to set a new password. Please verify your email first."]);
            setTimeout(() => {
+             if (cancelled) return;
              localStorage.removeItem("tempData");
              navigate("/forget-password");
-             
            }, 3000);
 
          }
