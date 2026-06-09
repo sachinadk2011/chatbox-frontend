@@ -41,7 +41,7 @@ const SetPassword = () => {
         console.error("error checking pw: ", error)
         setErrorMessages([error?.msg || error?.error || "Something went wrong. Please try again."]);
         setTimeout(() => {
-          
+          if (cancelled) return;
           navigate("/verify-otp");
         }, 3000);
       }
