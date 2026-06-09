@@ -175,7 +175,8 @@ const googleLogin = async()=>{
     }
     catch(error){
       console.error("Error checking password reset request:", error);
-      throw { errors: error.response?.data.errors, msg: error.response?.data.message || "something went wrong" };
+      const message = error.response?.data.message || "Something went wrong";
+      throw { errors: error.response?.data.errors, msg: message, message };
     }
   }
 
