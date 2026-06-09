@@ -167,6 +167,19 @@ const googleLogin = async()=>{
     }
   }
 
+  const CheckPasswordResetRequest = async(email)=>{
+    try{
+      const res =  await api.get('/api/auth/checkverification', {params: {email}});
+      console.log("CheckPasswordResetRequest response:", res.data);
+      return res.data;
+    }
+    catch(error){
+      console.error("Error checking password reset request:", error);
+      const message = error.response?.data.message || "Something went wrong";
+      throw { errors: error.response?.data.errors, msg: message, message };
+    }
+  }
+
   const setPassword = async(email, newPassword, oldPassword=null)=>{
     try {
       const response = await api.post('/api/auth/resetpassword', {email, newPassword, oldPassword });
@@ -174,15 +187,21 @@ const googleLogin = async()=>{
       return response.data;
     } catch (error) {
       console.error("Error setting password:", error);
+      const message = error.response?.data.message || error.response?.data.error || error.message || "Something went wrong";
       if (error.response?.status === 400) {
-        throw new Error( {errors: error.response?.data.errors , msg: error.response?.data.message });
+        const err = new Error(message);
+        err.errors = error.response?.data.errors;
+        err.msg = message;
+        throw err;
       }
-      throw new Error( error.response?.data.error || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" });
+      const err = new Error(message);
+      err.msg = message;
+      throw err;
     }
   }
 
   return (
-    <UserContext.Provider value={{ login, signup, getUser, user, setUser, googleLogin, RefreshToken, logout, verifyOtp, resendOtp, forgetPassword, setPassword }}>
+    <UserContext.Provider value={{ login, signup, getUser, user, setUser, googleLogin, RefreshToken, logout, verifyOtp, resendOtp, forgetPassword, setPassword, CheckPasswordResetRequest }}>
       {props.children}
     </UserContext.Provider>
   );
