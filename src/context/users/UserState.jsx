@@ -169,7 +169,7 @@ const googleLogin = async()=>{
 
   const CheckPasswordResetRequest = async(email)=>{
     try{
-      const res =  await api.get('api/auth/checkverification', {params: {email}});
+      const res =  await api.get('/api/auth/checkverification', {params: {email}});
       console.log("CheckPasswordResetRequest response:", res.data);
       return res.data;
     }
