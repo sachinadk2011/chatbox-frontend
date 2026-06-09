@@ -187,10 +187,16 @@ const googleLogin = async()=>{
       return response.data;
     } catch (error) {
       console.error("Error setting password:", error);
+      const message = error.response?.data.message || error.response?.data.error || error.message || "Something went wrong";
       if (error.response?.status === 400) {
-        throw new Error( {errors: error.response?.data.errors , msg: error.response?.data.message });
+        const err = new Error(message);
+        err.errors = error.response?.data.errors;
+        err.msg = message;
+        throw err;
       }
-      throw new Error( error.response?.data.error || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" });
+      const err = new Error(message);
+      err.msg = message;
+      throw err;
     }
   }
 
