@@ -35,7 +35,7 @@ const DownloadBtn = ({ url }) => {
 };
 
 /* ── WhatsApp-style media grid ───────────────────────────────────────────── */
-const MediaGrid = ({ files, onOpen }) => {
+const MediaGrid = ({ files, onOpen, onMediaLoad  }) => {
   const show = files.slice(0, 4);
   const extra = files.length - 4;
   return (
@@ -44,8 +44,8 @@ const MediaGrid = ({ files, onOpen }) => {
         <div key={i} className="relative aspect-square bg-gray-200 cursor-pointer"
              onClick={() => f.type === 'image' && onOpen?.(f.url)}>
           {f.type === 'image'
-            ? <img src={f.url} alt="img" className="w-full h-full object-cover" />
-            : <video src={f.url} className="w-full h-full object-cover" />}
+            ? <img src={f.url} onLoad={onMediaLoad}  alt="img" className="w-full h-full object-cover" />
+            : <video src={f.url} onLoadedData={onMediaLoad} className="w-full h-full object-cover" />}
           {i === 3 && extra > 0 && (
             <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
               <span className="text-white text-xl font-bold">+{extra}</span>
@@ -88,7 +88,7 @@ const SeenTick = ({ status }) => {
  *   → adds extra bottom margin to visually separate groups.
  *   → sender never shows an avatar (own messages), but isLast controls spacing.
  */
-export const SendMsg = ({ types, send, status, isLast = true }) => {
+export const SendMsg = ({ types, send, status, isLast = true, onMediaLoad  }) => {
   const { user } = useContext(UserContext);
   const [lightbox, setLightbox] = useState(null);
 
@@ -141,7 +141,9 @@ export const SendMsg = ({ types, send, status, isLast = true }) => {
               className="relative overflow-hidden rounded-2xl rounded-br-sm shadow-md cursor-zoom-in max-w-[220px]"
               onClick={() => setLightbox(send)}
             >
-              <img src={send} alt="sent" className="block w-full h-auto max-w-[220px] object-cover" />
+              <img src={send} alt="sent" 
+              onLoad={onMediaLoad}
+              className="block w-full h-auto max-w-[220px] object-cover" />
               {/* Gradient overlay on hover */}
               <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors" />
               <DownloadBtn url={send} />
@@ -161,7 +163,7 @@ export const SendMsg = ({ types, send, status, isLast = true }) => {
       <div className={`flex items-end justify-end ${groupMb}`}>
         <div className="flex flex-col items-end mx-2">
           <div className="relative overflow-hidden rounded-2xl rounded-br-sm shadow-md max-w-[220px]">
-            <video controls className="block w-full h-auto max-w-[220px]">
+            <video controls onLoad={onMediaLoad} className="block w-full h-auto max-w-[220px]">
               <source src={send} type="video/mp4" />
             </video>
             <DownloadBtn url={send} />
@@ -182,7 +184,7 @@ export const SendMsg = ({ types, send, status, isLast = true }) => {
         <ImageLightbox src={lightbox} onClose={() => setLightbox(null)} />
         <div className={`flex items-end justify-end ${groupMb}`}>
           <div className="flex flex-col items-end mx-2 space-y-1">
-            {imgs.length > 0 && <MediaGrid files={imgs} onOpen={setLightbox} />}
+            {imgs.length > 0 && <MediaGrid files={imgs} onOpen={setLightbox}  onMediaLoad={onMediaLoad} />}
             {others.map((f, i) => (
               <a key={i} href={f.url} download className="block text-blue-200 underline text-xs">
                 Download File {i + 1}

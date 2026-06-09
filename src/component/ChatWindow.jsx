@@ -143,7 +143,7 @@ const ChatWindow = ({ onBack }) => {
         className="flex-1 min-h-0 overflow-y-auto scrollbar-hide"
         style={{ overscrollBehavior: 'contain' }}
       >
-        <MessageBox />
+        <MessageBox key={Selecteduser?.receiverId} />
       </div>
 
       {/* ── Image previews ── */}

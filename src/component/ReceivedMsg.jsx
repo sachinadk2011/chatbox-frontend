@@ -35,7 +35,7 @@ const DownloadBtn = ({ url }) => {
 };
 
 /* ── Media grid ──────────────────────────────────────────────────────────── */
-const MediaGrid = ({ files, onOpen }) => {
+const MediaGrid = ({ files, onOpen , onMediaLoad }) => {
   const show  = files.slice(0, 4);
   const extra = files.length - 4;
   return (
@@ -44,8 +44,8 @@ const MediaGrid = ({ files, onOpen }) => {
         <div key={i} className="relative aspect-square bg-gray-300 cursor-pointer"
              onClick={() => f.type === 'image' && onOpen?.(f.url)}>
           {f.type === 'image'
-            ? <img src={f.url} alt="img" className="w-full h-full object-cover" />
-            : <video src={f.url} className="w-full h-full object-cover" />}
+            ? <img src={f.url} alt="img" onLoad={onMediaLoad} className="w-full h-full object-cover" />
+            : <video src={f.url} onLoadedData={onMediaLoad} className="w-full h-full object-cover" />}
           {i === 3 && extra > 0 && (
             <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
               <span className="text-white text-xl font-bold">+{extra}</span>
@@ -63,7 +63,7 @@ const MediaGrid = ({ files, onOpen }) => {
  * showAvatar: true on the LAST consecutive message from this person → show avatar.
  * isLast:     true on the LAST consecutive message → add group-end spacing.
  */
-export const ReceivedMsg = ({ types, received, showAvatar = true, isLast = true }) => {
+export const ReceivedMsg = ({ types, received, showAvatar = true, isLast = true, onMediaLoad  }) => {
   const { Selecteduser } = useContext(MessageContext);
   const [lightbox, setLightbox] = useState(null);
 
@@ -118,7 +118,7 @@ export const ReceivedMsg = ({ types, received, showAvatar = true, isLast = true 
             className="relative overflow-hidden rounded-2xl rounded-bl-sm shadow-md cursor-zoom-in max-w-[220px]"
             onClick={() => setLightbox(received)}
           >
-            <img src={received} alt="received" className="block w-full h-auto max-w-[220px] object-cover" />
+            <img src={received} alt="received" onLoad={onMediaLoad} className="block w-full h-auto max-w-[220px] object-cover" />
             <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors" />
             <DownloadBtn url={received} />
           </div>
@@ -134,7 +134,7 @@ export const ReceivedMsg = ({ types, received, showAvatar = true, isLast = true 
       <div className={`flex items-end ${groupMb}`}>
         {avatarSlot}
         <div className="relative overflow-hidden rounded-2xl rounded-bl-sm shadow-md max-w-[220px]">
-          <video controls className="block w-full h-auto max-w-[220px]">
+          <video controls onLoad={onMediaLoad} className="block w-full h-auto max-w-[220px]">
             <source src={received} type="video/mp4" />
           </video>
           <DownloadBtn url={received} />
@@ -153,7 +153,7 @@ export const ReceivedMsg = ({ types, received, showAvatar = true, isLast = true 
         <div className={`flex items-end ${groupMb}`}>
           {avatarSlot}
           <div className="space-y-1">
-            {imgs.length > 0 && <MediaGrid files={imgs} onOpen={setLightbox} />}
+            {imgs.length > 0 && <MediaGrid files={imgs} onOpen={setLightbox} onMediaLoad={onMediaLoad} />}
             {others.map((f, i) => (
               <a key={i} href={f.url} download className="block text-blue-600 underline text-xs">
                 Download File {i + 1}
