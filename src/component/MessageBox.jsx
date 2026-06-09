@@ -27,11 +27,13 @@ const MessageBox = () => {
   // ── Scroll the #messages div to bottom ────────────────────────────────────
   const scrollToBottom = useCallback((behavior = 'auto') => {
     requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
       const el = document.getElementById('messages');
       if (!el) return;
       behavior === 'smooth'
         ? el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
         : (el.scrollTop = el.scrollHeight);
+      });
     });
   }, []);
 
@@ -44,12 +46,16 @@ const MessageBox = () => {
     prevLengthRef.current = 0;
     markAsRead(Selecteduser.receiverId);
     // Scroll instantly after next paint so all context messages are rendered
+    const timer = setTimeout(() => {
     scrollToBottom('auto');
+  }, 100);
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  return () => clearTimeout(timer);
   }, [Selecteduser?.receiverId]);
 
   // ── Smooth scroll when new message arrives in the SAME chat ───────────────
   useEffect(() => {
+    if (allMessages.length === 0) return;
     const curr = allMessages.length;
     if (curr > prevLengthRef.current && prevLengthRef.current !== 0) {
       scrollToBottom('smooth');
