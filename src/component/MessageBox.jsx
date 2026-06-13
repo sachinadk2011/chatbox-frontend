@@ -35,6 +35,7 @@ const MessageBox = () => {
   // ── Reset + mark-read when chat partner changes ───────────────────────────
   useEffect(() => {
     if (!Selecteduser?.receiverId) return;
+    console.info(`Chat partner changed to ${Selecteduser.receiverName} (${Selecteduser.receiverId}). Resetting messages and marking as read.`);
     setOlderMessages([]);
     setPage(1);
     setHasMore(false);

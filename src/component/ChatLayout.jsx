@@ -6,7 +6,7 @@ import MessageContext from '../context/message/MessageContext';
 
 /**
  * ChatLayout — shared by:
- *   • /           (ChatRoom / home)
+ *   • /chats           (ChatRoom / home)
  *   • /friends/list  (FriendList)
  *
  * Desktop (md+):  sidebar always visible on left, chat on right

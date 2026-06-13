@@ -37,7 +37,7 @@ const Navbar = () => {
     {
       key: 'home',
       label: 'Chats',
-      path: '/',
+      path: '/chats' || "/chats/v1/u/${userId}",
       icon: (active) => (
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-6 h-6"
           fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.75}>
@@ -144,7 +144,7 @@ const Navbar = () => {
         {/* Nav links */}
         <nav className="flex flex-col items-center gap-2 flex-1">
           {navItems.map((item) => (
-            <NavLink key={item.key} to={item.path} end={item.path === '/'} className={desktopLink} title={item.label}>
+            <NavLink key={item.key} to={item.path} end={!['home', 'friends'].includes(item.key)} className={desktopLink} title={item.label}>
               {({ isActive }) => (
                 <>
                   {item.icon(isActive)}
@@ -206,7 +206,7 @@ const Navbar = () => {
 
         {/* Nav items */}
         {navItems.map((item) => (
-          <NavLink key={item.key} to={item.path} end={item.path === '/'} className={mobileLink}>
+          <NavLink key={item.key} to={item.path} end={!['home', 'friends'].includes(item.key)} className={mobileLink}>
             {({ isActive }) => (
               <>
                 {item.icon(isActive)}

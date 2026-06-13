@@ -47,7 +47,9 @@ function AppContent() {
 
   // ── Close chat on ANY route change (going to / from /friends also closes) ──
   useEffect(() => {
-    setSelectedUser(EMPTY_USER);
+    if (!location.pathname.startsWith('/chats/v1/u/') && !location.pathname.startsWith('/friends/list/v1/u/')) {
+      setSelectedUser(EMPTY_USER);
+    }
   }, [location.pathname, setSelectedUser]);
 
   const fetchUser = useCallback(async () => {
@@ -62,7 +64,7 @@ function AppContent() {
           onlineStatus: userData.user.onlineStatus, lastActive: userData.user.lastActive,
           profile_Url: userData.user.profile_Url, public_id: userData.user.public_id,
         });
-        navigate("/");
+        navigate("/chats");
       }
     } catch (error) {
       if (error.response?.status === 401) {
@@ -152,8 +154,13 @@ function AppContent() {
           <Route path="/verify-otp" element={<VerificationCode />} />
           <Route path="/forget-password" element={<UpdateEmail />} />
           <Route path="/set-new-password" element={<SetPassword />} />
-          <Route path="/" element={<ProtectedRoute element={<ChatRoom />} />} />
+
+          <Route path="/chats" element={<ProtectedRoute element={<ChatRoom />} />} />
+          <Route path="/chats/v1/u/:userId" element={<ProtectedRoute element={<ChatRoom />} />} />
+
           <Route path="/friends/list" element={<ProtectedRoute element={<FrdConnection />} />} />
+          <Route path="/friends/list/v1/u/:userId" element={<ProtectedRoute element={<FrdConnection />} />} />
+          
           <Route path="/friends/add-friend" element={<ProtectedRoute element={<SuggestionsFriend />} />} />
           <Route path="/friends/received-requests" element={<ProtectedRoute element={<ReceivedReq />} />} />
           <Route path="/friends/sent-requests" element={<ProtectedRoute element={<SentfrdReq />} />} />
