@@ -27,7 +27,7 @@ const Login = () => {
       const userdata = await getUser();
       localStorage.setItem("user", JSON.stringify(userdata.user));
       setUser(userdata.user);
-      navigate("/");
+      navigate("/chats");
     } catch (err) {
       setError(err.message || "Google login failed. Please try again.");
     }
@@ -46,7 +46,7 @@ const Login = () => {
       const userdata = await getUser();
       localStorage.setItem("user", JSON.stringify(userdata.user));
       setUser(userdata.user);
-      navigate("/");
+      navigate("/chats");
     } catch (err) {
       setError(err.message || "Invalid credentials. Please try again.");
       setCredential({ email: "", password: "" });
