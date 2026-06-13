@@ -23,6 +23,8 @@ import VerificationCode from './auth_pages/VerifyOtpCode';
 import UpdateEmail from './auth_pages/UpdateEmail';
 import SetPassword from './auth_pages/SetPassword';
 
+import { getTokenExpiry } from './utils/tokenUtils';
+
 const EMPTY_USER = {
   receiverId: null, receiverName: '', senderId: null, senderName: '',
   lastActive: null, onlineStatus: false, profile_url: null,
@@ -35,7 +37,7 @@ function ProtectedRoute({ element }) {
 
 function AppContent() {
   const navigate = useNavigate();
-  const { getUser, setUser, user } = useContext(UserContext);
+  const { getUser, setUser, user, RefreshToken  } = useContext(UserContext);
   const { setSelectedUser } = useContext(MessageContext);
   const location = useLocation();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -80,6 +82,55 @@ function AppContent() {
     window.addEventListener("online", goOnline);
     return () => { window.removeEventListener("offline", goOffline); window.removeEventListener("online", goOnline); };
   }, [fetchUser]);
+
+  // ── Proactive token refresh — fires 2 min before expiry ──────────────────
+  useEffect(() => {
+    if (!user?.id) return; // not logged in, nothing to do
+
+    const schedule = () => {
+      const token = localStorage.getItem("token");
+      if (!token) return null;
+
+      const expiry = getTokenExpiry(token);
+      if (!expiry) return null;
+
+      const msUntilRefresh = expiry - Date.now() - 2 * 60 * 1000; // 2 min early
+
+      if (msUntilRefresh <= 0) {
+        // Token already expired or expiring very soon — refresh right now
+        RefreshToken()
+          .then(newToken => {
+            localStorage.setItem("token", newToken);
+            SetAuthToken(newToken);
+            schedule(); // schedule next refresh
+          })
+          .catch(() => {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            navigate("/login");
+          });
+        return null;
+      }
+
+      // Schedule refresh before expiry
+      console.log(`Token refreshes in ${Math.round(msUntilRefresh / 1000 / 60)} minutes`);
+      return setTimeout(async () => {
+        try {
+          const newToken = await RefreshToken();
+          localStorage.setItem("token", newToken);
+          SetAuthToken(newToken);
+          schedule(); // schedule the NEXT refresh (15 min from now)
+        } catch {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          navigate("/login");
+        }
+      }, msUntilRefresh);
+    };
+
+    const timer = schedule();
+    return () => { if (timer) clearTimeout(timer); };
+  }, [user?.id]); // re-schedule when user logs in/out
 
   return (
     /*

@@ -1,8 +1,11 @@
 import SetAuthToken, { api } from "./SetAuthToken";
 
+let isSetup = false; // module-level flag — persists across renders
 
 const setupAxiosInterceptors = (navigate, RefreshToken) => {
-  
+  if (isSetup) return; // prevent multiple setups
+  isSetup = true;
+
   // request interceptor (attach token automatically)
   api.interceptors.request.use((config) => {
     const token = localStorage.getItem("token");
@@ -16,7 +19,13 @@ const setupAxiosInterceptors = (navigate, RefreshToken) => {
   api.interceptors.response.use(
     (response) => response,
     async (error) => {
-      if (error.response && error.response.status === 401) {
+      // ── Network error (server cold start / offline) — DO NOT logout ──
+      if (!error.response) {
+        console.warn("Network error — server may be waking up");
+        return Promise.reject(error); // just reject, let caller handle
+      }
+
+      if (error.response.status === 401) {
         const originalRequest = error.config;
         if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;

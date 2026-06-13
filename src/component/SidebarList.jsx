@@ -46,8 +46,12 @@ const SidebarList = () => {
   }catch(error){
    
     console.error("Error in sidebarlist useeffect:", error);
-    if (!error.success){
-      navigate("/login");
+    if (error.response?.status === 401) {
+    navigate("/login"); // only real auth failures
+  }else if (!error.response && retryCount < 2) {
+      // Network error — server might be waking up, retry after 3 seconds
+      console.log(`Server may be waking up, retrying in 3s (attempt ${retryCount + 1})`);
+      setTimeout(() => fetchdata(retryCount + 1), 3000);
     }
   }
     }
