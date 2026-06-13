@@ -17,12 +17,23 @@ export const MessageState = (props) => {
   });
 
   const selectedUserRef = useRef(Selecteduser);
- // Override setSelectedUser to keep ref in sync immediately (no useEffect delay)
+
   const setSelectedUserWithRef = useCallback((val) => {
-    const resolved = typeof val === 'function' ? val(selectedUserRef.current) : val;
-    selectedUserRef.current = resolved;
-    setSelectedUser(resolved);
-  }, []);
+  const resolved = typeof val === 'function' ? val(selectedUserRef.current) : val;
+
+  // Tell server previous chat is closed
+  if (selectedUserRef.current?.receiverId) {
+    socket.emit('chatClose');
+  }
+  console.info(`Setting selected user to ${resolved.receiverName} (${resolved.receiverId}). Informing server of chat change.`);
+  // Tell server new chat is open
+  if (resolved?.receiverId) {
+    socket.emit('chatOpen', { viewingUserId: resolved.receiverId });
+  }
+
+  selectedUserRef.current = resolved;
+  setSelectedUser(resolved);
+}, []);
 
   // ── Connect + join room once user.id is known ──────────────────────────────
   useEffect(() => {
@@ -53,11 +64,12 @@ export const MessageState = (props) => {
 
   // ── Receive incoming messages ──────────────────────────────────────────────
   useEffect(() => {
-    const handler = async (msg) => {
+    const handler = (msg) => {
       const senderId = msg.sender?._id?.toString();
-      const frdId = senderId === user?.id?.toString()
-        ? msg.receiver?._id?.toString()
-        : senderId;
+      const myId     = user?.id?.toString();
+      const frdId    = senderId === myId
+            ? msg.receiver?._id?.toString()
+            : senderId;
       setMessages(prev => {
         let updated = [...prev];
         let chat = updated.find(c => c.otherUserId === frdId);
@@ -71,19 +83,6 @@ export const MessageState = (props) => {
         }
         return updated;
       });
-
-      // auto mark as read if currently chatting with sender
-      const isIncoming = senderId && senderId !== user?.id?.toString();
-     const openChatId = selectedUserRef.current?.receiverId?.toString();
-      const isViewingThisChat = isIncoming && openChatId === senderId;
-      console.info(`Received message ${msg._id} from ${senderId}. isIncoming: ${isIncoming}, isViewingThisChat: ${isViewingThisChat}`);
-
-      if (isViewingThisChat ) {
-        // Mark as read silently — user is already looking at this chat
-        console.info(`Auto-marking message ${msg.message} as read since user is viewing the chat`);
-        await api.put(`/api/messages/markasread/${senderId}`).catch(() => {});
-        socket.emit("markRead", { senderId, receiverId: user?.id });
-      }
     };
     
     socket.on("receiveMessage", handler);
@@ -167,7 +166,7 @@ export const MessageState = (props) => {
   return (
     <MessageContext.Provider value={{
       messages, setMessages,
-      Selecteduser, setSelectedUser,
+      Selecteduser, setSelectedUser: setSelectedUserWithRef,
       fetchMessages, fetchConversation, sendMessage, markAsRead,
       drafts, setDraft,
     }}>
