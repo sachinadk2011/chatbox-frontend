@@ -2,12 +2,13 @@ import React, {useContext, useEffect} from 'react'
 import ChatList from './ChatList';
 import MessageContext from '../context/message/MessageContext';
 import FriendsContext from '../context/friends/FriendsContext';
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import UserContext from '../context/users/UserContext';
 import SetAuthToken from '../utils/SetAuthToken';
 
 const SidebarList = () => {
-   let navigate = useNavigate();
+   const navigate = useNavigate();
+    const location = useLocation();
     const { setSelectedUser,selectedUser, messages, fetchMessages, setMessages } = useContext(MessageContext);
     const { friends, fetchFriends, setFriends } = useContext(FriendsContext);
     const { user, RefreshToken } = useContext(UserContext);
@@ -99,6 +100,7 @@ const SidebarList = () => {
   
   
     const DisplayChat = (friend) => {
+      
       console.log("friend11: ", friend);
       console.log("user1: ", user);
 
@@ -111,8 +113,13 @@ const SidebarList = () => {
               onlineStatus: friend.onlineStatus,
               profile_url: friend.profile_Url
   });
+  // take path from url and in selected path user chat will display either as /chats/v1/... or /friends/list/v1/...
+  let basePath =  location.pathname.split('/').filter(Boolean)
+  let v1Index = basePath.indexOf("v1");
+  let endIndex = v1Index !== -1  ? v1Index : basePath.length;
+  console.info(`Navigating to chat :${basePath} \n ${basePath.slice(0, endIndex).join('/')}/v1/u/${friend._id}`);  
   
-        
+    navigate(`/${basePath.slice(0, endIndex).join('/')}/v1/u/${friend._id}`);    
   
 }
     //console.log("1"+messages[length-1]?.sender?.name, user?.name);

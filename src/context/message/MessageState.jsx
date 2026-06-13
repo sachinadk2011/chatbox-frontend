@@ -16,6 +16,25 @@ export const MessageState = (props) => {
     lastActive: null, onlineStatus: false, profile_url: null
   });
 
+  const selectedUserRef = useRef(Selecteduser);
+
+  const setSelectedUserWithRef = useCallback((val) => {
+  const resolved = typeof val === 'function' ? val(selectedUserRef.current) : val;
+
+  // Tell server previous chat is closed
+  if (selectedUserRef.current?.receiverId) {
+    socket.emit('chatClose');
+  }
+  console.info(`Setting selected user to ${resolved.receiverName} (${resolved.receiverId}). Informing server of chat change.`);
+  // Tell server new chat is open
+  if (resolved?.receiverId) {
+    socket.emit('chatOpen', { viewingUserId: resolved.receiverId });
+  }
+
+  selectedUserRef.current = resolved;
+  setSelectedUser(resolved);
+}, []);
+
   // ── Connect + join room once user.id is known ──────────────────────────────
   useEffect(() => {
     if (!user?.id) return;
@@ -46,9 +65,11 @@ export const MessageState = (props) => {
   // ── Receive incoming messages ──────────────────────────────────────────────
   useEffect(() => {
     const handler = (msg) => {
-      const frdId = msg.sender?._id?.toString() === user?.id?.toString()
-        ? msg.receiver?._id?.toString()
-        : msg.sender?._id?.toString();
+      const senderId = msg.sender?._id?.toString();
+      const myId     = user?.id?.toString();
+      const frdId    = senderId === myId
+            ? msg.receiver?._id?.toString()
+            : senderId;
       setMessages(prev => {
         let updated = [...prev];
         let chat = updated.find(c => c.otherUserId === frdId);
@@ -63,6 +84,7 @@ export const MessageState = (props) => {
         return updated;
       });
     };
+    
     socket.on("receiveMessage", handler);
     return () => socket.off("receiveMessage", handler);
   }, [user?.id]);
@@ -144,7 +166,7 @@ export const MessageState = (props) => {
   return (
     <MessageContext.Provider value={{
       messages, setMessages,
-      Selecteduser, setSelectedUser,
+      Selecteduser, setSelectedUser: setSelectedUserWithRef,
       fetchMessages, fetchConversation, sendMessage, markAsRead,
       drafts, setDraft,
     }}>
