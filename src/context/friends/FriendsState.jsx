@@ -1,5 +1,5 @@
 import FriendsContext from "./FriendsContext";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { api } from '../../utils/SetAuthToken';
 
 
@@ -93,8 +93,11 @@ export const FriendsState = (props) => {
         }  
     };                         
 
+    const value = useMemo(() => ({
+        friends, setFriends, people, setPeople, fetchFriends, suggestionFrds, fetchReceivedRequests, receivedFriendRequest, fetchSentRequests, sendFriendRequest, receivedFrdReq, setReceivedFrdReq, sentFrdReq, setSentFrdReq, cancelFriendRequest
+    }), [friends, people, receivedFrdReq, sentFrdReq]);
     return (
-    <FriendsContext.Provider value={{ friends, setFriends, people, setPeople, fetchFriends, suggestionFrds, fetchReceivedRequests, receivedFriendRequest, fetchSentRequests, sendFriendRequest, receivedFrdReq, setReceivedFrdReq, sentFrdReq, setSentFrdReq, cancelFriendRequest }}>
+    <FriendsContext.Provider value={value}>
       {props.children}
     </FriendsContext.Provider>
   );

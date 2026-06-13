@@ -1,5 +1,5 @@
 import MessageContext from "./MessageContext";
-import React, { useState, useCallback, useContext, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useContext, useEffect, useRef, useMemo } from 'react';
 import UserContext from "../users/UserContext";
 import socket from "../../server/socket";
 import { api } from '../../utils/SetAuthToken';
@@ -19,15 +19,22 @@ export const MessageState = (props) => {
   const selectedUserRef = useRef(Selecteduser);
 
   const setSelectedUserWithRef = useCallback((val) => {
+    
   const resolved = typeof val === 'function' ? val(selectedUserRef.current) : val;
+
+  // No-op if nothing actually changes
+  if (selectedUserRef.current?.receiverId === resolved?.receiverId) {
+    return;
+  }
 
   // Tell server previous chat is closed
   if (selectedUserRef.current?.receiverId) {
     socket.emit('chatClose');
   }
-  console.info(`Setting selected user to ${resolved.receiverName} (${resolved.receiverId}). Informing server of chat change.`);
+  
   // Tell server new chat is open
   if (resolved?.receiverId) {
+    console.info(`Setting selected user to ${resolved.receiverName} (${resolved.receiverId}). Informing server of chat change.`);
     socket.emit('chatOpen', { viewingUserId: resolved.receiverId });
   }
 
@@ -163,13 +170,15 @@ export const MessageState = (props) => {
     } catch (e) { /* silent */ }
   };
 
-  return (
-    <MessageContext.Provider value={{
-      messages, setMessages,
+
+  const  value = useMemo(() =>({
+messages, setMessages,
       Selecteduser, setSelectedUser: setSelectedUserWithRef,
       fetchMessages, fetchConversation, sendMessage, markAsRead,
-      drafts, setDraft,
-    }}>
+      drafts, setDraft
+  }), [messages, Selecteduser, drafts]);
+  return (
+    <MessageContext.Provider value={value}>
       {props.children}
     </MessageContext.Provider>
   );

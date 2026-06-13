@@ -61,16 +61,10 @@ const SidebarList = () => {
    //setUser(JSON.parse(localStorage.getItem('user')))
   }, [fetchFriends, fetchMessages, navigate]);
 
-  
-  
-
-  //console.log("sidebarlist "+JSON.stringify(selectedUser));
-  //console.log("sidebarlist friend "+JSON.stringify(friends));
-  //console.log("sidebarlist "+JSON.stringify(messages));
-  //console.log( JSON.parse(localStorage.getItem("user")).name, JSON.parse(localStorage.getItem('user')).id);
-
+ 
+/* 
    console.log("friends: ", friends);
-  console.log("messages: ", messages);
+  console.log("messages: ", messages); */
   const lastMsg = friends.map(frd => {
   const chat = messages.find(msg => msg.otherUserId === frd._id.toString());
   

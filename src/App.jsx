@@ -48,7 +48,10 @@ function AppContent() {
   // ── Close chat on ANY route change (going to / from /friends also closes) ──
   useEffect(() => {
     if (!location.pathname.startsWith('/chats/v1/u/') && !location.pathname.startsWith('/friends/list/v1/u/')) {
-      setSelectedUser(EMPTY_USER);
+      setSelectedUser(prev => {
+      if (!prev?.receiverId) return prev; // already empty — don't trigger a new call
+      return EMPTY_USER;
+    });
     }
   }, [location.pathname, setSelectedUser]);
 
@@ -64,7 +67,9 @@ function AppContent() {
           onlineStatus: userData.user.onlineStatus, lastActive: userData.user.lastActive,
           profile_Url: userData.user.profile_Url, public_id: userData.user.public_id,
         });
-        navigate("/chats");
+        if (location.pathname === '/login' || location.pathname === '/signup' || location.pathname === '/') {
+              navigate("/chats");
+        }
       }
     } catch (error) {
       if (error.response?.status === 401) {

@@ -1,4 +1,5 @@
 import React, { useContext } from 'react';
+import { useNavigate, useLocation } from "react-router";
 import Header from './Header';
 import SidebarList from './SidebarList';
 import ChatWindow from './ChatWindow';
@@ -28,9 +29,20 @@ const EMPTY_USER = {
 
 const ChatLayout = () => {
   const { Selecteduser, setSelectedUser } = useContext(MessageContext);
+  const navigate = useNavigate();
+  const location = useLocation();
   const hasChatOpen = !!Selecteduser?.receiverId;
 
-  const handleBack = () => setSelectedUser(EMPTY_USER);
+  const handleBack = () => {
+    console.info("Back button clicked. Clearing selected user and closing chat.");
+    const basePath = location.pathname.split('/').filter(Boolean);
+    const v1Index = basePath.indexOf("v1");
+    const endIndex = v1Index !== -1  ? v1Index : basePath.length;
+    /* console.info(`Closing chat, navigating to :${basePath.slice(0, endIndex).join('/')}`); */
+    
+    setSelectedUser(EMPTY_USER);
+    navigate(`/${basePath.slice(0, endIndex).join('/')}`);
+  };
 
   return (
     <div className="flex w-full h-full overflow-hidden bg-gray-50">

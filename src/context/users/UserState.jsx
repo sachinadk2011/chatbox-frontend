@@ -1,5 +1,5 @@
 import UserContext from "./UserContext";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {api} from '../../utils/SetAuthToken';
 import setupAxiosInterceptors from "../../utils/SetupAxiosInterceptors";
@@ -200,8 +200,12 @@ const googleLogin = async()=>{
     }
   }
 
+  const value = useMemo( ()=>({
+login, signup, getUser, user, setUser, googleLogin, RefreshToken, logout, verifyOtp, resendOtp, forgetPassword, setPassword, CheckPasswordResetRequest 
+  }), [user]);
+
   return (
-    <UserContext.Provider value={{ login, signup, getUser, user, setUser, googleLogin, RefreshToken, logout, verifyOtp, resendOtp, forgetPassword, setPassword, CheckPasswordResetRequest }}>
+    <UserContext.Provider value={value}>
       {props.children}
     </UserContext.Provider>
   );
