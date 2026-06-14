@@ -9,16 +9,15 @@ export const FriendsState = (props) => {
     const [receivedFrdReq, setReceivedFrdReq] = useState([]);
     const [sentFrdReq, setSentFrdReq] = useState([]);
 
-    // Fetch all friends
     const fetchFriends = useCallback(async () => {
         try {
             const response = await api.get('/api/friends/fetchallfriends');
-        
-            
             return response.data.friends;
         } catch (error) {
-            console.error("Error fetching friends:", error, error.message );
-            throw new Error( error.response?.data.error || error.response?.data.message||error.message || { success: false, message:error.error || "Something went wrong" });
+            console.error("Error fetching friends:", error.message);
+            // Re-throw the original error so callers keep error.response,
+            // error.status, and error.isAuthFailure set by the interceptor.
+            throw error;
         }
     }, []);
 

@@ -4,7 +4,6 @@ import MessageContext from '../context/message/MessageContext';
 import FriendsContext from '../context/friends/FriendsContext';
 import { useNavigate, useLocation } from "react-router";
 import UserContext from '../context/users/UserContext';
-import SetAuthToken from '../utils/SetAuthToken';
 
 const SidebarList = () => {
    const navigate = useNavigate();
@@ -19,14 +18,12 @@ const SidebarList = () => {
     
 
     useEffect( () => {
-      console.log("Setting up axios interceptors in SidebarList", user, localStorage.getItem("token"));
-      SetAuthToken(localStorage.getItem("token"));
-      if (!user) return;
-      const fetchdata = async()=>{
+      if (!user?.id) return; // wait until user is loaded
+      
+      const fetchdata = async (retryCount = 0) => { // retryCount properly defined as parameter
       try{
      const frd= await fetchFriends();
     const msg= await fetchMessages();
-    console.log("Fetched friends and messages in SidebarList useEffect", frd);
     setFriends(frd);
     setMessages(msg.reduce((acc, mg)=>{
               const otherUserId = mg.sender._id.toString() === user?.id.toString() ? mg.receiver._id.toString() : mg.sender._id.toString();
@@ -40,26 +37,29 @@ const SidebarList = () => {
                 }
                 
               }
-              //console.log("acc: ", acc);
               return acc;
             }, []));
    
   }catch(error){
-   
     console.error("Error in sidebarlist useeffect:", error);
-    if (error.response?.status === 401) {
-    navigate("/login"); // only real auth failures
-  }else if (!error.response && retryCount < 2) {
-      // Network error — server might be waking up, retry after 3 seconds
+
+    const isAuth = error.response?.status === 401
+      || error.status === 401       // set by interceptor on refresh failure
+      || error.isAuthFailure;       // set by interceptor on 4xx refresh rejection
+
+    if (isAuth) {
+      navigate("/login"); // real auth failure — redirect to login
+    } else if (!error.response && !error.isAuthFailure && retryCount < 2) {
+      // Network error only (no response from server) — might be waking up
       console.log(`Server may be waking up, retrying in 3s (attempt ${retryCount + 1})`);
       setTimeout(() => fetchdata(retryCount + 1), 3000);
     }
+    // 4xx (other than 401) or 5xx → StatusGate handles the error page
   }
     }
     fetchdata();
 
-   //setUser(JSON.parse(localStorage.getItem('user')))
-  }, [fetchFriends, fetchMessages, navigate]);
+  }, [user?.id, fetchFriends, fetchMessages, navigate]);
 
  
 /* 
@@ -90,18 +90,7 @@ const SidebarList = () => {
   };
 });
 
- 
-  
-  
-  console.log("lastMsg: ", lastMsg);
-  
-  
-  
     const DisplayChat = (friend) => {
-      
-      console.log("friend11: ", friend);
-      console.log("user1: ", user);
-
         setSelectedUser({
               receiverId: friend._id,          // friend’s id
               receiverName: friend.name,      // friend’s name

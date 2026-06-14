@@ -109,11 +109,9 @@ const googleLogin = async()=>{
     }
   }, [])
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-    setupAxiosInterceptors(navigate, RefreshToken);
-  }, [ RefreshToken]);
+  // Set up axios interceptors synchronously on first render so that
+  // any initial requests (like fetchUser in child components) are intercepted correctly.
+  setupAxiosInterceptors(navigate, RefreshToken);
 
   const logout = async ()=>{
     try {
