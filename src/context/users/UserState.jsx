@@ -4,6 +4,28 @@ import { useNavigate } from "react-router-dom";
 import {api} from '../../utils/SetAuthToken';
 import setupAxiosInterceptors from "../../utils/SetupAxiosInterceptors";
 
+const throwFriendlyError = (error) => {
+  const message = error.response?.data.error || error.response?.data.message || error.message || "Something went wrong";
+  const msgText = typeof message === 'object' ? (message.message || "Something went wrong") : message;
+  const err = new Error(msgText);
+  err.msg = msgText;
+  if (error.response) {
+    err.response = error.response;
+  }
+  if (error.response?.data?.errors) {
+    err.errors = error.response.data.errors;
+  }
+  if (error.status !== undefined) {
+    err.status = error.status;
+  } else if (error.response?.status !== undefined) {
+    err.status = error.response.status;
+  }
+  if (error.isAuthFailure !== undefined) {
+    err.isAuthFailure = error.isAuthFailure;
+  }
+  throw err;
+};
+
 export const UserState = (props) => {
   let navigate = useNavigate();
  
@@ -34,9 +56,9 @@ export const UserState = (props) => {
     
 
     return response.data;
-    }catch(error){
-  throw new Error( error.response?.data.error || error.response?.data.message || error.message || { success: false, message: error.error || "Something went wrong" });
-}
+    } catch (error) {
+      throwFriendlyError(error);
+    }
   
 
   }
@@ -53,9 +75,9 @@ export const UserState = (props) => {
 
     return response.data;
   
-}catch(error){
-  throw new Error( error.response?.data.error || error.response?.data.message || error.message || { success: false, message: error.error || "Something went wrong" });
-}
+    } catch (error) {
+      throwFriendlyError(error);
+    }
   }
 
 // login/signup with google
@@ -65,9 +87,9 @@ const googleLogin = async()=>{
     console.log("google login response: ", response.data);
 
     return response.data;
-  } catch (error) {
-    throw new Error( error.response?.data.error || error.response?.data.message || error.message || { success: false, message: error.error || "Something went wrong" });
-  } 
+    } catch (error) {
+      throwFriendlyError(error);
+    } 
 }
 
   // gets user
@@ -92,10 +114,8 @@ const googleLogin = async()=>{
       
       return response.data;
     } catch (error) {
-      
-      throw new Error( error.response?.data.error || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" });
-
-  }
+      throwFriendlyError(error);
+    }
 }
   const RefreshToken = useCallback(async ()=>{
     try {
@@ -105,7 +125,7 @@ const googleLogin = async()=>{
       
     } catch (error) {
       console.error("Error refreshing token:", error);
-      throw new Error( error.response?.data.error||error.response?.data.msg || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" });
+      throwFriendlyError(error);
     }
   }, [])
 
@@ -122,8 +142,7 @@ const googleLogin = async()=>{
       
     } catch (error) {
       console.error("Error during logout:", error);
-      throw new Error( error.response?.data.error || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" });
-      
+      throwFriendlyError(error);
     }
   }
 
@@ -135,8 +154,7 @@ const googleLogin = async()=>{
       
     } catch (error) {
       console.error("Error verifying OTP:", error);
-      throw new Error( error.response?.data.error || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" });
-      
+      throwFriendlyError(error);
     }
   }
 
@@ -148,8 +166,7 @@ const googleLogin = async()=>{
       
     } catch (error) {
       console.error("Error resending OTP:", error);
-      throw new Error( error.response?.data.error || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" });
-      
+      throwFriendlyError(error);
     }
   }
 
@@ -160,8 +177,8 @@ const googleLogin = async()=>{
       return response.data;
       
     } catch (error) {
-      console.error("Error resending OTP:", error);
-      throw new Error( error.response?.data.error || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" });
+      console.error("Error during forget password:", error);
+      throwFriendlyError(error);
     }
   }
 
@@ -185,16 +202,7 @@ const googleLogin = async()=>{
       return response.data;
     } catch (error) {
       console.error("Error setting password:", error);
-      const message = error.response?.data.message || error.response?.data.error || error.message || "Something went wrong";
-      if (error.response?.status === 400) {
-        const err = new Error(message);
-        err.errors = error.response?.data.errors;
-        err.msg = message;
-        throw err;
-      }
-      const err = new Error(message);
-      err.msg = message;
-      throw err;
+      throwFriendlyError(error);
     }
   }
 
