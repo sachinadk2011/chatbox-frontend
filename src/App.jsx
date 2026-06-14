@@ -3,7 +3,7 @@ import './App.css';
 import Login from './auth_pages/Login';
 import {
   BrowserRouter as Router, Routes, Route,
-  useNavigate, Navigate, useLocation
+  useNavigate, Navigate, useLocation, matchPath
 } from "react-router-dom";
 import SignUp from './auth_pages/SignUp';
 import ChatRoom from './pages/ChatRoom';
@@ -22,8 +22,11 @@ import SentfrdReq from './component/friends/SentfrdReq';
 import VerificationCode from './auth_pages/VerifyOtpCode';
 import UpdateEmail from './auth_pages/UpdateEmail';
 import SetPassword from './auth_pages/SetPassword';
-
+import ErrorPage from './pages/ErrorPage';
+import ServerWakingBanner from './component/ServerWakingBanner';
+import { subscribeBackendStatus, getBackendStatus, isDevEnvironment, markBackendOnline } from './utils/backendStatus';
 import { getTokenExpiry } from './utils/tokenUtils';
+import axios from 'axios';
 
 const EMPTY_USER = {
   receiverId: null, receiverName: '', senderId: null, senderName: '',
@@ -35,140 +38,284 @@ function ProtectedRoute({ element }) {
   return user?.id ? element : <Navigate to="/login" replace />;
 }
 
+function RootRedirect() {
+  const { user } = useContext(UserContext);
+  return <Navigate to={user?.id ? '/chats' : '/login'} replace />;
+}
+
+/**
+ * StatusGate — checks backend/maintenance status and renders error pages.
+ *
+ * WHY a separate component?
+ * React's Rules of Hooks: the SAME number of hooks must run on every render.
+ * The original AppContent had early returns (offline/500/maintenance) that came
+ * AFTER some hooks but BEFORE others (useCallback, useEffect for fetchUser, etc.).
+ * When an error state triggered, React saw fewer hooks than the initial render
+ * and crashed: "Rendered fewer hooks than expected".
+ *
+ * Fix: StatusGate has exactly 3 hooks (useState + 2x useEffect) with NO hooks
+ * after its early returns — safe to return early from.
+ * AppContent has all its hooks unconditionally — no status-based early returns.
+ *
+ * AUTO-RECOVERY:
+ * When status !== 'online', StatusGate polls /api/auth/ping every 6 s.
+ * On first success it calls markBackendOnline() — the status flips back,
+ * StatusGate renders children, and React Router shows the user's original URL
+ * automatically. No page reload, no navigation needed.
+ */
+const PING_URL = `${import.meta.env.VITE_URL || 'http://localhost:8000'}/api/auth/ping`;
+const POLL_INTERVAL_MS = 6000; // poll every 6 seconds while in error state
+
+const AUTH_ROUTES = ['/login', '/signup', '/verify-otp', '/forget-password', '/set-new-password'];
+
+function StatusGate({ children }) {
+  const location = useLocation();
+  const [backendStatus, setBackendStatus] = useState(getBackendStatus);
+  const [isRetrying, setIsRetrying] = useState(false);
+
+  useEffect(() => {
+    const unsub = subscribeBackendStatus((status) => setBackendStatus(status));
+    setBackendStatus(getBackendStatus()); // sync immediately
+    return unsub;
+  }, []);
+
+  // ── Auto-poll /api/auth/ping while in any error state ──────────────────────
+  // When ping succeeds, markBackendOnline() flips status back → children render
+  // → React Router restores the user's original URL automatically.
+  useEffect(() => {
+    if (backendStatus === 'online') return; // no polling needed when healthy
+    if (import.meta.env.VITE_MAINTENANCE_MODE === 'true') return; // maintenance: don't poll
+
+    const ping = async () => {
+      try {
+        await axios.get(PING_URL, { timeout: 5000 });
+        // ✅ Server is back — recover without page reload
+        markBackendOnline();
+      } catch {
+        // still down — next interval will try again
+      }
+    };
+
+    // First ping immediately so recovery is instant when server comes back
+    ping();
+    const id = setInterval(ping, POLL_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [backendStatus]);
+
+  // ── Manual retry (Refresh button on the error page) ────────────────────────
+  const handleRetry = useCallback(async () => {
+    setIsRetrying(true);
+    try {
+      await axios.get(PING_URL, { timeout: 5000 });
+      markBackendOnline(); // triggers re-render → children show automatically
+    } catch {
+      // server still down — keep showing error page, auto-poll continues
+    } finally {
+      setIsRetrying(false);
+    }
+  }, []);
+
+  // ── Auth pages: never replace the login/signup form with an error page ──────
+  // The form itself shows the server-sleeping state inline and auto-retries.
+  // This keeps credentials in the form and gives a much better UX.
+  if (AUTH_ROUTES.includes(location.pathname)) {
+    return children;
+  }
+
+  // ── Maintenance mode — set VITE_MAINTENANCE_MODE=true in .env ──
+  if (import.meta.env.VITE_MAINTENANCE_MODE === 'true') {
+    return <ErrorPage type="maintenance" />;
+  }
+
+  // ── DEV: backend process completely unreachable (no response at all) ──
+  // Prod uses ServerWakingBanner (non-blocking overlay) instead.
+  if (isDevEnvironment() && backendStatus === 'offline') {
+    return <ErrorPage type="offline" onRetry={handleRetry} isRetrying={isRetrying} />;
+  }
+
+  // ── 500/503 server error (DB down, crash, etc.) — shown in both dev & prod ──
+  if (backendStatus === 'error500') {
+    return <ErrorPage type="500" onRetry={handleRetry} isRetrying={isRetrying} />;
+  }
+
+  return children;
+}
+
+/**
+ * AppContent — the actual app shell.
+ * ALL hooks run unconditionally on every render (no status-based early returns).
+ * Status/error page switching is handled entirely by the parent StatusGate.
+ */
 function AppContent() {
   const navigate = useNavigate();
-  const { getUser, setUser, user, RefreshToken  } = useContext(UserContext);
+  const { getUser, setUser, user, RefreshToken } = useContext(UserContext);
   const { setSelectedUser } = useContext(MessageContext);
   const location = useLocation();
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isOnline, setIsOnline] = useState(navigator.onLine); // eslint-disable-line no-unused-vars
 
-  const hideSidebar = ['/login', '/signup', '/verify-otp', '/forget-password', '/set-new-password']
-    .includes(location.pathname);
+  // All valid route patterns in the app
+  const KNOWN_ROUTES = [
+    '/', '/login', '/signup', '/verify-otp', '/forget-password', '/set-new-password',
+    '/chats', '/chats/v1/u/:userId',
+    '/friends/list', '/friends/list/v1/u/:userId',
+    '/friends/add-friend', '/friends/received-requests', '/friends/sent-requests',
+  ];
+  const is404 = !KNOWN_ROUTES.some(pattern => matchPath(pattern, location.pathname));
 
-  // ── Close chat on ANY route change (going to / from /friends also closes) ──
+  const AUTH_PAGES = ['/login', '/signup', '/verify-otp', '/forget-password', '/set-new-password'];
+  const hideSidebar = AUTH_PAGES.includes(location.pathname) || is404;
+
+  // ── Close chat on ANY route change ──
   useEffect(() => {
-    if (!location.pathname.startsWith('/chats/v1/u/') && !location.pathname.startsWith('/friends/list/v1/u/')) {
+    if (
+      !location.pathname.startsWith('/chats/v1/u/') &&
+      !location.pathname.startsWith('/friends/list/v1/u/')
+    ) {
       setSelectedUser(prev => {
-      if (!prev?.receiverId) return prev; // already empty — don't trigger a new call
-      return EMPTY_USER;
-    });
+        if (!prev?.receiverId) return prev; // already empty — avoid re-render
+        return EMPTY_USER;
+      });
     }
   }, [location.pathname, setSelectedUser]);
 
   const fetchUser = useCallback(async () => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem('token');
     if (!token) return;
     SetAuthToken(token);
     try {
       const userData = await getUser();
       if (userData.success) {
         setUser({
-          name: userData.user.name, email: userData.user.email, id: userData.user.id,
-          onlineStatus: userData.user.onlineStatus, lastActive: userData.user.lastActive,
-          profile_Url: userData.user.profile_Url, public_id: userData.user.public_id,
+          name: userData.user.name,
+          email: userData.user.email,
+          id: userData.user.id,
+          onlineStatus: userData.user.onlineStatus,
+          lastActive: userData.user.lastActive,
+          profile_Url: userData.user.profile_Url,
+          public_id: userData.user.public_id,
         });
-        if (location.pathname === '/login' || location.pathname === '/signup' || location.pathname === '/') {
-              navigate("/chats");
+        if (
+          location.pathname === '/login' ||
+          location.pathname === '/signup' ||
+          location.pathname === '/'
+        ) {
+          navigate('/chats');
         }
       }
     } catch (error) {
       if (error.response?.status === 401) {
-        localStorage.removeItem("token"); localStorage.removeItem("user");
-        SetAuthToken(null); navigate("/login");
-      } else if (error.request && !error.response) {
-        console.warn("Network error — server may be waking up:", error.message);
+        // Real auth failure — clear session
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        SetAuthToken(null);
+        navigate('/login');
       }
+      // Network error / 5xx → StatusGate shows appropriate error page.
+      // Do NOT logout — session stays valid when server recovers.
     }
-  }, [setUser]);
+  }, [setUser]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     fetchUser();
     const goOffline = () => { setIsOnline(false); setUser(p => ({ ...p, onlineStatus: false })); };
-    const goOnline = () => { setIsOnline(true); fetchUser(); };
-    window.addEventListener("offline", goOffline);
-    window.addEventListener("online", goOnline);
-    return () => { window.removeEventListener("offline", goOffline); window.removeEventListener("online", goOnline); };
+    const goOnline  = () => { setIsOnline(true);  fetchUser(); };
+    window.addEventListener('offline', goOffline);
+    window.addEventListener('online',  goOnline);
+    return () => {
+      window.removeEventListener('offline', goOffline);
+      window.removeEventListener('online',  goOnline);
+    };
   }, [fetchUser]);
 
-  // ── Proactive token refresh — fires 2 min before expiry ──────────────────
+  // ── Proactive token refresh — fires 2 min before expiry ──
   useEffect(() => {
-    if (!user?.id) return; // not logged in, nothing to do
+    if (!user?.id) return;
 
     const schedule = () => {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem('token');
       if (!token) return null;
 
       const expiry = getTokenExpiry(token);
       if (!expiry) return null;
 
-      const msUntilRefresh = expiry - Date.now() - 2 * 60 * 1000; // 2 min early
+      const msUntilRefresh = expiry - Date.now() - 2 * 60 * 1000;
 
       if (msUntilRefresh <= 0) {
-        // Token already expired or expiring very soon — refresh right now
         RefreshToken()
           .then(newToken => {
-            localStorage.setItem("token", newToken);
+            localStorage.setItem('token', newToken);
             SetAuthToken(newToken);
-            schedule(); // schedule next refresh
+            schedule();
           })
-          .catch(() => {
-            localStorage.removeItem("token");
-            localStorage.removeItem("user");
-            navigate("/login");
+          .catch(err => {
+            if (err?.response?.status) {
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
+              navigate('/login');
+            } else {
+              console.warn('Token refresh failed — server may be sleeping. Will retry.');
+            }
           });
         return null;
       }
 
-      // Schedule refresh before expiry
       console.log(`Token refreshes in ${Math.round(msUntilRefresh / 1000 / 60)} minutes`);
       return setTimeout(async () => {
         try {
           const newToken = await RefreshToken();
-          localStorage.setItem("token", newToken);
+          localStorage.setItem('token', newToken);
           SetAuthToken(newToken);
-          schedule(); // schedule the NEXT refresh (15 min from now)
-        } catch {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
-          navigate("/login");
+          schedule();
+        } catch (err) {
+          if (err?.response?.status) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            navigate('/login');
+          } else {
+            console.warn('Token refresh failed — server may be sleeping. Will retry.');
+            setTimeout(() => schedule(), 15_000);
+          }
         }
       }, msUntilRefresh);
     };
 
     const timer = schedule();
     return () => { if (timer) clearTimeout(timer); };
-  }, [user?.id]); // re-schedule when user logs in/out
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    /*
-      Auth pages (login, signup, etc.): height = auto so the page scrolls freely.
-      Chat pages: height = 100dvh so keyboard-resize works on mobile.
-    */
     <div
       className={`flex flex-row ${hideSidebar ? '' : 'overflow-hidden'}`}
-      style={hideSidebar
-        ? { minHeight: '100dvh' }          // auth: scrollable
-        : { height: '100dvh' }             // chat: fixed viewport
+      style={
+        hideSidebar
+          ? { minHeight: '100dvh' }   // auth pages: scrollable
+          : { height: '100dvh' }      // chat pages: fixed viewport
       }
     >
       {user?.id && !hideSidebar && <Navbar />}
+
+      {/* Prod/non-dev: non-blocking sleeping overlay for Render cold-starts */}
+      {!isDevEnvironment() && <ServerWakingBanner />}
+
       <div className={`flex-1 min-h-0 ${hideSidebar ? '' : 'overflow-hidden pb-16 md:pb-0'}`}>
         <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/verify-otp" element={<VerificationCode />} />
-          <Route path="/forget-password" element={<UpdateEmail />} />
-          <Route path="/set-new-password" element={<SetPassword />} />
+          <Route path="/"                      element={<RootRedirect />} />
+          <Route path="/login"                 element={<Login />} />
+          <Route path="/signup"                element={<SignUp />} />
+          <Route path="/verify-otp"            element={<VerificationCode />} />
+          <Route path="/forget-password"       element={<UpdateEmail />} />
+          <Route path="/set-new-password"      element={<SetPassword />} />
 
-          <Route path="/chats" element={<ProtectedRoute element={<ChatRoom />} />} />
-          <Route path="/chats/v1/u/:userId" element={<ProtectedRoute element={<ChatRoom />} />} />
+          <Route path="/chats"                 element={<ProtectedRoute element={<ChatRoom />} />} />
+          <Route path="/chats/v1/u/:userId"    element={<ProtectedRoute element={<ChatRoom />} />} />
 
-          <Route path="/friends/list" element={<ProtectedRoute element={<FrdConnection />} />} />
-          <Route path="/friends/list/v1/u/:userId" element={<ProtectedRoute element={<FrdConnection />} />} />
-          
-          <Route path="/friends/add-friend" element={<ProtectedRoute element={<SuggestionsFriend />} />} />
-          <Route path="/friends/received-requests" element={<ProtectedRoute element={<ReceivedReq />} />} />
-          <Route path="/friends/sent-requests" element={<ProtectedRoute element={<SentfrdReq />} />} />
+          <Route path="/friends/list"                    element={<ProtectedRoute element={<FrdConnection />} />} />
+          <Route path="/friends/list/v1/u/:userId"       element={<ProtectedRoute element={<FrdConnection />} />} />
+          <Route path="/friends/add-friend"              element={<ProtectedRoute element={<SuggestionsFriend />} />} />
+          <Route path="/friends/received-requests"       element={<ProtectedRoute element={<ReceivedReq />} />} />
+          <Route path="/friends/sent-requests"           element={<ProtectedRoute element={<SentfrdReq />} />} />
+
+          <Route path="*" element={<ErrorPage type="404" />} />
         </Routes>
       </div>
     </div>
@@ -181,7 +328,14 @@ function App() {
       <UserState>
         <FriendsState>
           <MessageState>
-            <AppContent />
+            {/*
+              StatusGate wraps AppContent so all error-page early returns happen
+              in a component with NO hooks defined after those returns.
+              AppContent never returns early — all its hooks always run.
+            */}
+            <StatusGate>
+              <AppContent />
+            </StatusGate>
           </MessageState>
         </FriendsState>
       </UserState>
