@@ -32,6 +32,7 @@ const ChatList = ({ name, message, onClick, mutualfrdlen, profileUrl, frdlen, ti
   const [isHovered, setIsHovered] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
+  const dotsBtnRef = useRef(null);
   
 
   const profile_url = `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'U')}&background=random&color=random&bold=true&rounded=true`;
