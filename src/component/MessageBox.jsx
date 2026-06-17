@@ -133,15 +133,33 @@ const MessageBox = () => {
       )}
 
       <div className="flex flex-col px-3 py-2 gap-y-0">
-        {grouped.map(({ msg, isOwn, showAvatar, isLast, time, date }) => (
-          <React.Fragment key={msg._id}>
-            {isOwn
-              ? <SendMsg types={msg.types} send={msg.message} status={msg.status} isLast={isLast} onMediaLoad={onMediaLoad} time={time} />
-              : <ReceivedMsg types={msg.types} received={msg.message} showAvatar={showAvatar} isLast={isLast} onMediaLoad={onMediaLoad} time={time} />
-            }
-          </React.Fragment>
-        ))}
-      </div>
+  {grouped.map(({ msg, isOwn, showAvatar, isLast, time, date }, index) => {
+    
+    // Show date separator if first message OR date changed from previous message
+    const prevDate = index > 0 ? grouped[index - 1].date : null;
+    const showDateSeparator = date !== prevDate;
+
+    return (
+      <React.Fragment key={msg._id}>
+
+        {/* ── Date separator — Today / Yesterday / Mon / Jan 5 / Jan 5 2023 ── */}
+        {showDateSeparator && (
+          <div className="flex items-center justify-center my-3 select-none">
+            <span className="bg-gray-100 text-gray-500 text-[11px] font-medium px-3 py-1 rounded-full border border-gray-200 shadow-sm">
+              {date}
+            </span>
+          </div>
+        )}
+
+        {isOwn
+          ? <SendMsg types={msg.types} send={msg.message} status={msg.status} isLast={isLast} onMediaLoad={onMediaLoad} time={time} />
+          : <ReceivedMsg types={msg.types} received={msg.message} showAvatar={showAvatar} isLast={isLast} onMediaLoad={onMediaLoad} time={time} />
+        }
+
+      </React.Fragment>
+    );
+  })}
+</div>
 
       {/* ✅ Anchor at very bottom — scrollIntoView targets this */}
       <div ref={bottomRef} />
