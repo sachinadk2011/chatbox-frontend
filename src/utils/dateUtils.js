@@ -17,6 +17,7 @@ const LastActive = ({ timestamp }) => {
 };
 
 const getDateLabel = ({date}) =>{
+  if (!date) return '';
   const today = new Date();
   const msgDate = new Date(date);
 
@@ -32,7 +33,7 @@ const getDateLabel = ({date}) =>{
     msgDate.getDate()
   )
 
-  const diff = (startOfToday - startOfMsgDay) / (1000 * 60 * 60 * 24);
+  const diff = Math.floor((startOfToday - startOfMsgDay) / (1000 * 60 * 60 * 24));
 
   if (diff < 1) return "Today";
   if (diff < 2) return "Yesterday";
@@ -58,6 +59,7 @@ const getDateLabel = ({date}) =>{
 }
 
 const getTimeLabel = ({date}) =>{
+  if (!date) return '';
   const msgDate = new Date(date);
   return msgDate.toLocaleTimeString("en-US", {
     hour: "numeric",
@@ -66,4 +68,11 @@ const getTimeLabel = ({date}) =>{
   });
 }
 
-export { LastActive, getDateLabel, getTimeLabel };
+const getSidebarDateLabel =({date}) =>{
+  if (!date) return '';
+  const dateLabel = getDateLabel({date});
+  if (dateLabel === "Today") return getTimeLabel({date});
+  return dateLabel;
+}
+
+export { LastActive, getDateLabel, getTimeLabel, getSidebarDateLabel };

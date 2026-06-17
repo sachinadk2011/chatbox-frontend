@@ -5,6 +5,7 @@ import FriendsContext from '../context/friends/FriendsContext';
 import { useNavigate, useLocation } from "react-router";
 import UserContext from '../context/users/UserContext';
 import SetAuthToken from '../utils/SetAuthToken';
+import { getSidebarDateLabel } from '../utils/dateUtils';
 
 const SidebarList = () => {
    const navigate = useNavigate();
@@ -57,38 +58,45 @@ const SidebarList = () => {
    //setUser(JSON.parse(localStorage.getItem('user')))
   }, [fetchFriends, fetchMessages, navigate]);
 
-  
-  
-
-  //console.log("sidebarlist "+JSON.stringify(selectedUser));
-  //console.log("sidebarlist friend "+JSON.stringify(friends));
-  //console.log("sidebarlist "+JSON.stringify(messages));
-  //console.log( JSON.parse(localStorage.getItem("user")).name, JSON.parse(localStorage.getItem('user')).id);
-
    console.log("friends: ", friends);
   console.log("messages: ", messages);
+
   const lastMsg = friends.map(frd => {
   const chat = messages.find(msg => msg.otherUserId === frd._id.toString());
-  
+
   let previewText = "Tap to start messaging";
+  let lastMsgTime = null;
+  let lastMsgStatus = null;
+  let isLastMsgMine = false;
 
   if (chat && chat.messages.length > 0) {
     const lastMessage = chat.messages[chat.messages.length - 1];
-    const isYou = lastMessage.sender._id === user?.id;
-    const rawText = lastMessage.message ?? ''; // guard against null
-    // For media messages show a label instead of URL
+
+    // Is the last message mine?
+    isLastMsgMine = lastMessage.sender?._id?.toString() === user?.id?.toString();
+    lastMsgStatus = lastMessage.status;
+    const date = lastMessage.date;
+    lastMsgTime   = date ? getSidebarDateLabel({  date }) : null;
+
+    const rawText  = lastMessage.message ?? '';
     const msgTypes = lastMessage.types || 'text';
+
     let displayText;
     if (msgTypes === 'image')    displayText = '📷 Photo';
-    else if (msgTypes === 'video') displayText = '🎥 Video';
+    else if (msgTypes === 'video')    displayText = '🎥 Video';
     else if (msgTypes === 'multiple') displayText = '📎 Attachments';
     else displayText = rawText.length < 30 ? rawText : rawText.slice(0, 30) + '...';
-    previewText = (isYou ? 'You: ' : '') + displayText;
+
+    // Only prepend "You:" for your own messages — received ones show as-is
+    previewText = (isLastMsgMine ? 'You: ' : '') + displayText;
   }
 
   return {
     frdId: frd._id,
-    message: previewText
+    message: previewText,
+    time:    lastMsgTime,
+    status:  lastMsgStatus,
+    isOwn:   isLastMsgMine,
   };
 });
 
@@ -130,8 +138,17 @@ const SidebarList = () => {
           {friends.map((element)=>{
             return(
             <div key={element._id} className="flex items-center mb-4 cursor-pointer hover:bg-gray-100 p-2 rounded-md">
-              <ChatList  name={element.name} message={lastMsg.find(msg=> msg.frdId === element._id)?.message}
-              onClick={()=>DisplayChat(element)} mutualfrdlen={element.mutualfrdlen} profileUrl={element.profile_Url} frdlen={element.friends.length} />
+              <ChatList
+                name={element.name}
+                message={lastMsg.find(msg => msg.frdId === element._id)?.message}
+                time={lastMsg.find(msg => msg.frdId === element._id)?.time}
+                status={lastMsg.find(msg => msg.frdId === element._id)?.status}
+                isOwn={lastMsg.find(msg => msg.frdId === element._id)?.isOwn}
+                onClick={() => DisplayChat(element)}
+                mutualfrdlen={element.mutualfrdlen}
+                profileUrl={element.profile_Url}
+                frdlen={element.friends.length}
+              />
             </div>
         )})}
         </div> 
