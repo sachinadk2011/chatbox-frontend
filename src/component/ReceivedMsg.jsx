@@ -63,7 +63,7 @@ const MediaGrid = ({ files, onOpen , onMediaLoad }) => {
  * showAvatar: true on the LAST consecutive message from this person → show avatar.
  * isLast:     true on the LAST consecutive message → add group-end spacing.
  */
-export const ReceivedMsg = ({ types, received, showAvatar = true, isLast = true, onMediaLoad  }) => {
+export const ReceivedMsg = ({ types, received, showAvatar = true, isLast = true, onMediaLoad, time }) => {
   const { Selecteduser } = useContext(MessageContext);
   const [lightbox, setLightbox] = useState(null);
 
@@ -95,33 +95,111 @@ export const ReceivedMsg = ({ types, received, showAvatar = true, isLast = true,
   // ── TEXT bubble ──────────────────────────────────────────────────────────
   if (msgType === 'text' || !['image', 'video', 'file', 'multiple', 'audio'].includes(msgType)) {
     return (
-      <div className={`flex items-end ${groupMb}`}>
-        {avatarSlot}
-        <div className="max-w-[75%] sm:max-w-xs">
-          <span className="px-4 py-2 rounded-2xl rounded-bl-sm bg-white border border-gray-100 text-gray-800 text-sm shadow-sm inline-block">
-            {msgContent}
+  <div className={`flex items-end ${groupMb}`}>
+    {avatarSlot}
+    <div className="max-w-[75%] sm:max-w-xs">
+      {/* 1. Added 'relative' and 'pb-1' to give the time absolute breathing room if needed */}
+      <div className="relative px-4 py-2 rounded-2xl rounded-bl-sm bg-white border border-gray-100 text-gray-800 text-sm shadow-sm break-words">
+        
+        {/* 2. Content wrapper: renders inline so the time can sit right next to it */}
+        <span className="inline mr-2">
+          {msgContent}
+        </span>
+
+        {/* 3. WhatsApp Style Timestamp */}
+        {time && (
+          <span className="inline-flex items-center float-right mt-1.5 ml-2 text-[10px] text-gray-400 select-none vertical-align-middle">
+            {time}
+            {/* Optional: Add WhatsApp double-check ticks here if you want! */}
           </span>
-        </div>
+        )}
+        
+        {/* 4. Clearfix to prevent layout breaks from the float */}
+        <div className="clear-both"></div>
+        
       </div>
-    );
+    </div>
+  </div>
+);
   }
 
   // ── IMAGE ─────────────────────────────────────────────────────────────────
   if (msgType === 'image') {
     if (!received) return null;
+    const images = Array.isArray(received) ? received : [received];
+const totalImages = images.length;
+
+// Limit visual preview slots (WhatsApp typically uses 4, but here is a 3-image layout configuration)
+const maxPreviews = 3; 
+const displayImages = images.slice(0, maxPreviews);
+const remainingCount = totalImages - maxPreviews;
     return (
       <>
         <ImageLightbox src={lightbox} onClose={() => setLightbox(null)} />
         <div className={`flex items-end ${groupMb}`}>
           {avatarSlot}
-          <div
-            className="relative overflow-hidden rounded-2xl rounded-bl-sm shadow-md cursor-zoom-in max-w-[220px]"
-            onClick={() => setLightbox(received)}
-          >
-            <img src={received} alt="received" onLoad={onMediaLoad} className="block w-full h-auto max-w-[220px] object-cover" />
-            <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors" />
-            <DownloadBtn url={received} />
+          {/* Container bubble for the image(s) */}
+      <div className="relative overflow-hidden rounded-2xl rounded-bl-sm shadow-md max-w-[260px] bg-gray-100">
+        
+        {/* GRID LAYOUT FOR IMAGES */}
+        <div 
+          className={`grid gap-0.5 ${
+            totalImages === 1 
+              ? "grid-cols-1" 
+              : totalImages === 2 
+                ? "grid-cols-2" 
+                : "grid-cols-2" // 3+ images splits into a 2-column mosaic
+          }`}
+        >
+          {displayImages.map((imgUrl, index) => {
+            // If it's the 3rd image and there are more remaining, make it span full width or handle the overlay
+            const isLastSlot = index === maxPreviews - 1;
+            const hasMore = remainingCount > 0;
+
+            return (
+              <div 
+                key={imgUrl + index}
+                className={`relative cursor-zoom-in group/img ${
+                  totalImages === 3 && index === 0 ? "row-span-2 h-full" : ""
+                }`}
+                onClick={() => setLightbox(imgUrl)}
+              >
+                <img 
+                  src={imgUrl} 
+                  alt={`received-${index}`} 
+                  onLoad={onMediaLoad} 
+                  className="block w-full h-full min-h-[100px] max-h-[220px] object-cover" 
+                />
+                
+                {/* Hover overlay dimming effect */}
+                <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/10 transition-colors" />
+
+                {/* WhatsApp "+X more" Overlay on the final image */}
+                {isLastSlot && hasMore && (
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center select-none backdrop-blur-[2px]">
+                    <span className="text-white font-semibold text-xl">
+                      +{remainingCount}
+                    </span>
+                  </div>
+                )}
+                
+                <DownloadBtn url={imgUrl} />
+              </div>
+            );
+          })}
+        </div>
+
+        {/* WHATSAPP-STYLE TIMESTAMP OVERLAY */}
+        {time && (
+          /* Scrim/gradient background ensuring white text is visible over bright white images */
+          <div className="absolute bottom-0 right-0 left-0 bg-gradient-to-t from-black/40 via-black/20 to-transparent pt-6 pb-1.5 px-3 flex justify-end pointer-events-none">
+            <span className="text-[10px] text-white/90 font-medium select-none tracking-wide shadow-sm">
+              {time}
+            </span>
           </div>
+        )}
+
+      </div>
         </div>
       </>
     );
@@ -138,6 +216,14 @@ export const ReceivedMsg = ({ types, received, showAvatar = true, isLast = true,
             <source src={received} type="video/mp4" />
           </video>
           <DownloadBtn url={received} />
+          {time && (
+          /* Scrim/gradient background ensuring white text is visible over bright white images */
+          <div className="absolute bottom-0 right-0 left-0 bg-gradient-to-t from-black/40 via-black/20 to-transparent pt-6 pb-1.5 px-3 flex justify-end pointer-events-none">
+            <span className="text-[10px] text-white/90 font-medium select-none tracking-wide shadow-sm">
+              {time}
+            </span>
+          </div>
+        )}
         </div>
       </div>
     );

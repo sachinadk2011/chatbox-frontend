@@ -67,8 +67,24 @@ const normalizeStatus = (s) => {
 };
 const Tick = ({ read }) => (
   <svg viewBox="0 0 22 11" className="w-5 h-3 inline-block" fill="none">
-    <path d="M1 5.5L5.5 10L15 1" stroke={read ? '#3b82f6' : '#9ca3af'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M7 5.5L11.5 10L21 1" stroke={read ? '#3b82f6' : '#9ca3af'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    {/* Instead of hardcoded hex values, we use 'currentColor'.
+      If read is true, it will inherit whatever text color we pass to it.
+      If read is false (not read yet), it defaults to a clean, semi-transparent white text-white/50
+    */}
+    <path 
+      d="M1 5.5L5.5 10L15 1" 
+      stroke={read ? 'currentColor' : 'rgba(255,255,255,0.5)'} 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+    />
+    <path 
+      d="M7 5.5L11.5 10L21 1" 
+      stroke={read ? 'currentColor' : 'rgba(255,255,255,0.5)'} 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+    />
   </svg>
 );
 const SingleTick = () => (
@@ -88,7 +104,7 @@ const SeenTick = ({ status }) => {
  *   → adds extra bottom margin to visually separate groups.
  *   → sender never shows an avatar (own messages), but isLast controls spacing.
  */
-export const SendMsg = ({ types, send, status, isLast = true, onMediaLoad  }) => {
+export const SendMsg = ({ types, send, status, isLast = true, onMediaLoad, time  }) => {
   const { user } = useContext(UserContext);
   const [lightbox, setLightbox] = useState(null);
 
@@ -117,64 +133,166 @@ export const SendMsg = ({ types, send, status, isLast = true, onMediaLoad  }) =>
   // ── TEXT bubble ──────────────────────────────────────────────────────────
   if (msgType === 'text' || !['image', 'video', 'file', 'multiple', 'audio'].includes(msgType)) {
     return (
-      <div className={`flex items-end justify-end ${groupMb}`}>
-        <div className="flex flex-col items-end max-w-[75%] sm:max-w-xs mx-2">
-          <span className="px-4 py-2 rounded-2xl rounded-br-sm bg-indigo-500 text-white text-sm shadow-sm">
-            {msgContent}
+  <div className={`flex items-end justify-end ${groupMb}`}>
+    <div className="max-w-[75%] sm:max-w-xs mx-2">
+      
+      {/* 1. Original premium indigo background */}
+      <div className="relative px-4 py-2 rounded-2xl rounded-br-sm bg-indigo-500 text-white text-sm shadow-sm break-words">
+        
+        {/* 2. Content wrapper */}
+        <span className="inline mr-2">
+          {msgContent}
+        </span>
+
+        {/* 3. WhatsApp Style Metadata (Time + Light Green Ticks) */}
+        {(time || tickRow) && (
+          <span className="inline-flex items-center float-right mt-1.5 ml-2 text-[10px] select-none vertical-align-middle space-x-1">
+            
+            {/* The time stamp string - remains a clean soft white */}
+            {time && (
+              <span className="text-white/70 font-medium">
+                {time}
+              </span>
+            )}
+            
+            {/* The tick status icon - updated to a highly visible, crisp light green */}
+            {tickRow && (
+              <span className="text-emerald-200 flex items-center scale-105 drop-shadow-sm brightness-110">
+                {tickRow}
+              </span>
+            )}
+            
           </span>
-          {tickRow}
-        </div>
-        {rSpacer}
+        )}
+        
+        {/* 4. Clearfix */}
+        <div className="clear-both"></div>
+        
       </div>
-    );
+    </div>
+    {rSpacer}
+  </div>
+);
   }
 
   // ── IMAGE ─────────────────────────────────────────────────────────────────
-  if (msgType === 'image') {
-    if (!send) return null;
-    return (
-      <>
-        <ImageLightbox src={lightbox} onClose={() => setLightbox(null)} />
-        <div className={`flex items-end justify-end ${groupMb}`}>
-          <div className="flex flex-col items-end mx-2">
-            <div
-              className="relative overflow-hidden rounded-2xl rounded-br-sm shadow-md cursor-zoom-in max-w-[220px]"
-              onClick={() => setLightbox(send)}
-            >
-              <img src={send} alt="sent" 
-              onLoad={onMediaLoad}
-              className="block w-full h-auto max-w-[220px] object-cover" />
-              {/* Gradient overlay on hover */}
-              <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors" />
-              <DownloadBtn url={send} />
-            </div>
-            {tickRow}
-          </div>
-          {rSpacer}
-        </div>
-      </>
-    );
-  }
+  // Place these array processing lines right at the start of your component render block
+const mediaItems = Array.isArray(send) ? send : [send];
+const totalMediaCount = mediaItems.length;
+const maxPreviews = 3;
+const displayMedia = mediaItems.slice(0, maxPreviews);
+const remainingCount = totalMediaCount - maxPreviews;
 
-  // ── VIDEO ─────────────────────────────────────────────────────────────────
-  if (msgType === 'video') {
-    if (!send) return null;
-    return (
+// ── IMAGE ─────────────────────────────────────────────────────────────────
+if (msgType === 'image') {
+  if (!send) return null;
+  return (
+    <>
+      <ImageLightbox src={lightbox} onClose={() => setLightbox(null)} />
       <div className={`flex items-end justify-end ${groupMb}`}>
-        <div className="flex flex-col items-end mx-2">
-          <div className="relative overflow-hidden rounded-2xl rounded-br-sm shadow-md max-w-[220px]">
-            <video controls onLoad={onMediaLoad} className="block w-full h-auto max-w-[220px]">
-              <source src={send} type="video/mp4" />
-            </video>
-            <DownloadBtn url={send} />
+        
+        {/* Media Container Bubble */}
+        <div className="relative overflow-hidden rounded-2xl rounded-br-sm shadow-md max-w-[260px] bg-gray-100 mx-2">
+          
+          {/* WhatsApp-Style Image Mosaic Grid */}
+          <div className={`grid gap-0.5 ${totalMediaCount === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+            {displayMedia.map((imgUrl, index) => {
+              const isLastSlot = index === maxPreviews - 1;
+              const hasMore = remainingCount > 0;
+
+              return (
+                <div
+                  key={imgUrl + index}
+                  className={`relative cursor-zoom-in group/img ${
+                    totalMediaCount === 3 && index === 0 ? "row-span-2 h-full" : ""
+                  }`}
+                  onClick={() => setLightbox(imgUrl)}
+                >
+                  <img 
+                    src={imgUrl} 
+                    alt="sent" 
+                    onLoad={onMediaLoad} 
+                    className="block w-full h-full min-h-[120px] max-h-[240px] object-cover" 
+                  />
+                  
+                  {/* Hover Overlay */}
+                  <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/10 transition-colors" />
+
+                  {/* Multi-image "+X" text counter overlay */}
+                  {isLastSlot && hasMore && (
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center select-none backdrop-blur-[1px]">
+                      <span className="text-white font-semibold text-xl">
+                        +{remainingCount}
+                      </span>
+                    </div>
+                  )}
+
+                  <DownloadBtn url={imgUrl} />
+                </div>
+              );
+            })}
           </div>
-          {tickRow}
+
+          {/* WHATSAPP OVERLAY METADATA (Time + Clean Light Green Ticks) */}
+          {(time || tickRow) && (
+            <div className="absolute bottom-0 right-0 left-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent pt-6 pb-1.5 px-3 flex justify-end items-center space-x-1 pointer-events-none z-10">
+              {time && (
+                <span className="text-[10px] text-white/90 font-medium select-none tracking-wide shadow-sm">
+                  {time}
+                </span>
+              )}
+              {tickRow && (
+                <span className="text-emerald-300 flex items-center scale-105 drop-shadow-sm">
+                  {tickRow}
+                </span>
+              )}
+            </div>
+          )}
+
         </div>
         {rSpacer}
       </div>
-    );
-  }
+    </>
+  );
+}
 
+// ── VIDEO ─────────────────────────────────────────────────────────────────
+if (msgType === 'video') {
+  if (!send) return null;
+  return (
+    <div className={`flex items-end justify-end ${groupMb}`}>
+      
+      {/* Video Container Bubble */}
+      <div className="relative overflow-hidden rounded-2xl rounded-br-sm shadow-md max-w-[260px] bg-black mx-2">
+        
+        <video controls onLoad={onMediaLoad} className="block w-full h-auto max-w-[260px]">
+          <source src={send} type="video/mp4" />
+        </video>
+        
+        <DownloadBtn url={send} />
+
+        {/* WHATSAPP OVERLAY METADATA (Time + Light Green Ticks over video) 
+            Note: pointer-events-none ensures it doesn't block video clicking or control tracking */}
+        {(time || tickRow) && (
+          <div className="absolute bottom-0 right-0 left-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent pt-8 pb-2 px-3 flex justify-end items-center space-x-1 pointer-events-none z-10">
+            {time && (
+              <span className="text-[10px] text-white/90 font-medium select-none tracking-wide shadow-sm">
+                {time}
+              </span>
+            )}
+            {tickRow && (
+              <span className="text-emerald-300 flex items-center scale-105 drop-shadow-sm">
+                {tickRow}
+              </span>
+            )}
+          </div>
+        )}
+
+      </div>
+      {rSpacer}
+    </div>
+  );
+}
   // ── MULTIPLE ──────────────────────────────────────────────────────────────
   if (msgType === 'multiple' && filesArray.length > 0) {
     const imgs   = filesArray.filter(f => f.type === 'image' || f.type === 'video');
