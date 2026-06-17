@@ -1,7 +1,28 @@
 import FriendsContext from "./FriendsContext";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { api } from '../../utils/SetAuthToken';
 
+const throwFriendlyError = (error) => {
+  const message = error.response?.data.error || error.response?.data.message || error.message || "Something went wrong";
+  const msgText = typeof message === 'object' ? (message.message || "Something went wrong") : message;
+  const err = new Error(msgText);
+  err.msg = msgText;
+  if (error.response) {
+    err.response = error.response;
+  }
+  if (error.response?.data?.errors) {
+    err.errors = error.response.data.errors;
+  }
+  if (error.status !== undefined) {
+    err.status = error.status;
+  } else if (error.response?.status !== undefined) {
+    err.status = error.response.status;
+  }
+  if (error.isAuthFailure !== undefined) {
+    err.isAuthFailure = error.isAuthFailure;
+  }
+  throw err;
+};
 
 export const FriendsState = (props) => {
     const [friends, setFriends] = useState([]);
@@ -9,16 +30,15 @@ export const FriendsState = (props) => {
     const [receivedFrdReq, setReceivedFrdReq] = useState([]);
     const [sentFrdReq, setSentFrdReq] = useState([]);
 
-    // Fetch all friends
     const fetchFriends = useCallback(async () => {
         try {
             const response = await api.get('/api/friends/fetchallfriends');
-        
-            
             return response.data.friends;
         } catch (error) {
-            console.error("Error fetching friends:", error, error.message );
-            throw new Error( error.response?.data.error || error.response?.data.message||error.message || { success: false, message:error.error || "Something went wrong" });
+            console.error("Error fetching friends:", error.message);
+            // Re-throw the original error so callers keep error.response,
+            // error.status, and error.isAuthFailure set by the interceptor.
+            throw error;
         }
     }, []);
 
@@ -29,8 +49,8 @@ export const FriendsState = (props) => {
             setReceivedFrdReq(response.data.friendRequests);
             return response.data;
         } catch (error) {
-            console.error("Error fetching received friend requests:",  error.response?.data.error || error.response?.data.message);
-            throw new Error( error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" });
+            console.error("Error fetching received friend requests:",  error.response?.data.error || error.response?.data.message || error.message);
+            throwFriendlyError(error);
         }
     }, [])
 
@@ -42,7 +62,7 @@ export const FriendsState = (props) => {
             console.log(response.data.suggestionFriends);
         } catch (error) {
             console.error("Error fetching suggested friends:", error);
-            throw new Error( error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" });
+            throwFriendlyError(error);
         }
     }, []);
 
@@ -54,7 +74,7 @@ export const FriendsState = (props) => {
             return response.data;
         } catch (error) {
             console.error("Error handling friend request:", error);
-            throw new Error( error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" });
+            throwFriendlyError(error);
         }
     };
 
@@ -66,7 +86,7 @@ export const FriendsState = (props) => {
             return response.data;
         } catch (error) {
             console.error("Error fetching sent friend requests:", error);
-            throw new Error( error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" });
+            throwFriendlyError(error);
         }
     }, [])
 
@@ -76,8 +96,8 @@ export const FriendsState = (props) => {
             const response = await api.post('/api/friends/sendfriendrequest', { friendId });
             return response.data;
         } catch (error) {
-            console.error("Error sending friend request:", error.response.data.error , error.response.data.message);
-            throw new Error( error.response?.data.error || error.response.data.message || { success: false, message:error.error || "Something went wrong" });
+            console.error("Error sending friend request:", error.response?.data?.error, error.response?.data?.message || error.message);
+            throwFriendlyError(error);
         }
     };
 
@@ -89,12 +109,15 @@ export const FriendsState = (props) => {
             return response.data;
         } catch (error) {
             console.error("Error cancelling friend request:", error);
-            throw new Error( error.response?.data.error || error.response?.data.message || { success: false, message:error.error || "Something went wrong" });
+            throwFriendlyError(error);
         }  
     };                         
 
+    const value = useMemo(() => ({
+        friends, setFriends, people, setPeople, fetchFriends, suggestionFrds, fetchReceivedRequests, receivedFriendRequest, fetchSentRequests, sendFriendRequest, receivedFrdReq, setReceivedFrdReq, sentFrdReq, setSentFrdReq, cancelFriendRequest
+    }), [friends, people, receivedFrdReq, sentFrdReq]);
     return (
-    <FriendsContext.Provider value={{ friends, setFriends, people, setPeople, fetchFriends, suggestionFrds, fetchReceivedRequests, receivedFriendRequest, fetchSentRequests, sendFriendRequest, receivedFrdReq, setReceivedFrdReq, sentFrdReq, setSentFrdReq, cancelFriendRequest }}>
+    <FriendsContext.Provider value={value}>
       {props.children}
     </FriendsContext.Provider>
   );

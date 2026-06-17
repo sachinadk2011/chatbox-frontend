@@ -41,10 +41,10 @@ body {
 }
 
 /* Auth layout override — allow scrolling on mobile */
-body:has(.auth-page, .su-page, .otp-page, .fp-page, .sp-page) {
+body:has(.auth-page, .su-page, .otp-page, .fp-page, .sp-page, .error-page) {
   overflow: auto;
 }
-body:has(.auth-page, .su-page, .otp-page, .fp-page, .sp-page) #root {
+body:has(.auth-page, .su-page, .otp-page, .fp-page, .sp-page, .error-page) #root {
   height: auto;
   overflow: visible;
 }

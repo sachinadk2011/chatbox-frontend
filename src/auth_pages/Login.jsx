@@ -1,59 +1,181 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, NavLink } from "react-router";
 import UserContext from '../context/users/UserContext';
 import SetAuthToken from '../utils/SetAuthToken';
 import { GoogleLogin } from '@react-oauth/google';
+import {
+  subscribeBackendStatus, getBackendStatus,
+  isDevEnvironment
+} from '../utils/backendStatus';
+import axios from 'axios';
+
+const PING_URL = `${import.meta.env.VITE_URL || 'http://localhost:8000'}/api/auth/ping`;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Returns true if the error is a network-level failure (server sleeping / offline) */
+function isNetworkError(err) {
+  return !err?.response; // no HTTP response → pure network error
+}
 
 const Login = () => {
-  let navigate = useNavigate();
+  const navigate = useNavigate();
   const { login, getUser, setUser, googleLogin } = useContext(UserContext);
-  const [credential, setCredential] = useState({ email: "", password: "" });
-  const [showPass, setShowPass] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+
+  const [credential, setCredential] = useState({ email: '', password: '' });
+  const [showPass, setShowPass]     = useState(false);
+  const [loading, setLoading]       = useState(false);
+  const [error, setError]           = useState('');
+
+  // ── Server-sleeping / offline inline state ────────────────────────────────
+  // When a login attempt fails with a network error we enter "pending" mode:
+  //  · pendingCreds  → credentials (or null for Google) to retry with
+  //  · pendingGoogle → the raw Google credential string to retry with
+  //  · serverMsg     → the message shown to the user while waiting
+  const [pendingCreds, setPendingCreds]    = useState(null);   // { email, password } | null
+  const [pendingGoogle, setPendingGoogle]  = useState(null);   // google cred string | null
+  const [serverMsg, setServerMsg]          = useState('');     // non-empty → show banner
+  const retryPollRef = useRef(null);
+
+  // ── Core: do the actual login / redirect after server recovers ────────────
+  const doLogin = useCallback(async (email, password) => {
+    const json = await login(email, password);
+    if (!json.success) throw new Error(json.error || 'Login failed');
+    localStorage.setItem('token', json.token);
+    SetAuthToken(json.token);
+    const userdata = await getUser();
+    localStorage.setItem('user', JSON.stringify(userdata.user));
+    setUser(userdata.user);
+    navigate('/chats');
+  }, [login, getUser, setUser, navigate]);
+
+  const doGoogleLogin = useCallback(async (googleCred) => {
+    SetAuthToken(googleCred);
+    const json = await googleLogin();
+    localStorage.setItem('token', json.token);
+    SetAuthToken(json.token);
+    const userdata = await getUser();
+    localStorage.setItem('user', JSON.stringify(userdata.user));
+    setUser(userdata.user);
+    navigate('/chats');
+  }, [googleLogin, getUser, setUser, navigate]);
+
+  // ── Cancel any pending retry (cleanup) ────────────────────────────────────
+  const cancelPending = useCallback(() => {
+    if (retryPollRef.current) {
+      clearInterval(retryPollRef.current);
+      retryPollRef.current = null;
+    }
+    setPendingCreds(null);
+    setPendingGoogle(null);
+    setServerMsg('');
+  }, []);
+
+  // ── Start polling for server recovery, then auto-retry login ─────────────
+  const startRetryPolling = useCallback((creds, googleCred) => {
+    if (retryPollRef.current) clearInterval(retryPollRef.current);
+
+    const env = isDevEnvironment() ? 'dev' : 'prod';
+    setServerMsg(
+      env === 'prod'
+        ? 'Server is waking up (free tier cold start). Your login will be retried automatically — usually takes 10–30 s.'
+        : 'Backend is offline. Start the backend server and your login will be retried automatically.'
+    );
+
+    retryPollRef.current = setInterval(async () => {
+      try {
+        await axios.get(PING_URL, { timeout: 5000 });
+        // ✅ Server is back — retry the login
+        clearInterval(retryPollRef.current);
+        retryPollRef.current = null;
+        setServerMsg('✅ Server is back! Logging you in…');
+        try {
+          if (googleCred) {
+            await doGoogleLogin(googleCred);
+          } else {
+            await doLogin(creds.email, creds.password);
+          }
+          // Success → navigate('/chats') already called inside doLogin/doGoogleLogin
+        } catch (retryErr) {
+          // Login itself failed (bad credentials, not a network error)
+          cancelPending();
+          setError(retryErr.message || 'Login failed after server recovery. Please try again.');
+          setLoading(false);
+        }
+      } catch {
+        // still offline — keep polling
+      }
+    }, 5000);
+  }, [doLogin, doGoogleLogin, cancelPending]);
+
+  // ── Cleanup poll on unmount ────────────────────────────────────────────────
+  useEffect(() => {
+    return () => { if (retryPollRef.current) clearInterval(retryPollRef.current); };
+  }, []);
+
+  // ── Subscribe to backend status: if server recovers externally (StatusGate
+  //    polling), also clear the pending state here ───────────────────────────
+  useEffect(() => {
+    const unsub = subscribeBackendStatus((status) => {
+      if (status === 'online' && (pendingCreds || pendingGoogle)) {
+        // StatusGate's poll already caught the recovery — our poll will also
+        // catch it momentarily. Nothing extra needed here.
+      }
+    });
+    return unsub;
+  }, [pendingCreds, pendingGoogle]);
+
+  // ── Form submit ───────────────────────────────────────────────────────────
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    cancelPending();   // clear any previous pending state
+    setLoading(true);
+    setError('');
+    const { email, password } = credential;
+    try {
+      await doLogin(email, password);
+    } catch (err) {
+      if (isNetworkError(err)) {
+        // Server sleeping / offline — save credentials and poll
+        setPendingCreds({ email, password });
+        startRetryPolling({ email, password }, null);
+        // Keep loading=true so the button stays disabled while polling
+      } else {
+        setError(err.message || 'Invalid credentials. Please try again.');
+        setCredential(prev => ({ ...prev, password: '' }));
+        setLoading(false);
+      }
+    }
+  };
+
+  // ── Google login ──────────────────────────────────────────────────────────
+  const handleGoogleSuccess = async (credentialResponse) => {
+    cancelPending();
+    const { credential: googleCred } = credentialResponse;
+    setLoading(true);
+    setError('');
+    try {
+      await doGoogleLogin(googleCred);
+    } catch (err) {
+      if (isNetworkError(err)) {
+        setPendingGoogle(googleCred);
+        startRetryPolling(null, googleCred);
+      } else {
+        setError(err.message || 'Google login failed. Please try again.');
+        setLoading(false);
+      }
+    }
+  };
 
   const ochange = (e) => {
-    setError("");
+    cancelPending();   // user edits form → cancel any pending retry
+    setError('');
     setCredential({ ...credential, [e.target.name]: e.target.value });
   };
 
-  const handleGoogleSuccess = async (credentialResponse) => {
-    const { credential: googleCred } = credentialResponse;
-    try {
-      SetAuthToken(googleCred);
-      const json = await googleLogin();
-      localStorage.setItem("token", json.token);
-      SetAuthToken(json.token);
-      const userdata = await getUser();
-      localStorage.setItem("user", JSON.stringify(userdata.user));
-      setUser(userdata.user);
-      navigate("/chats");
-    } catch (err) {
-      setError(err.message || "Google login failed. Please try again.");
-    }
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setLoading(true);
-    setError("");
-    const { email, password } = credential;
-    try {
-      const json = await login(email, password);
-      if (!json.success) throw new Error(json.error || 'Login failed');
-      localStorage.setItem("token", json.token);
-      SetAuthToken(json.token);
-      const userdata = await getUser();
-      localStorage.setItem("user", JSON.stringify(userdata.user));
-      setUser(userdata.user);
-      navigate("/chats");
-    } catch (err) {
-      setError(err.message || "Invalid credentials. Please try again.");
-      setCredential({ email: "", password: "" });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const isSleeping = !!serverMsg && !serverMsg.startsWith('✅');
 
   return (
     <>
@@ -124,8 +246,9 @@ const Login = () => {
         @keyframes floatA { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
         @keyframes floatB { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-14px)} }
         @keyframes floatC { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-        @keyframes spin { to { transform: rotate(360deg) } }
-        @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes spin    { to { transform: rotate(360deg) } }
+        @keyframes fadeUp  { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes pulse   { 0%,100%{opacity:1} 50%{opacity:0.45} }
 
         .float-a { animation: floatA 3s ease-in-out infinite; }
         .float-b { animation: floatB 3.5s ease-in-out infinite; }
@@ -173,8 +296,53 @@ const Login = () => {
           font-size: 0.875rem;
           margin-bottom: 20px;
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           gap: 8px;
+        }
+
+        /* ── Server-sleeping banner ── */
+        .auth-sleeping {
+          background: #fffbeb;
+          border: 1px solid #fcd34d;
+          color: #92400e;
+          border-radius: 12px;
+          padding: 14px 16px;
+          font-size: 0.85rem;
+          margin-bottom: 20px;
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          line-height: 1.55;
+        }
+        .auth-sleeping.success {
+          background: #f0fdf4;
+          border-color: #86efac;
+          color: #166534;
+        }
+        .auth-sleeping-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+        .auth-sleeping-dots span {
+          display: inline-block;
+          width: 6px; height: 6px;
+          border-radius: 50%;
+          background: #d97706;
+          margin: 0 2px;
+          animation: pulse 1.2s ease-in-out infinite;
+        }
+        .auth-sleeping-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .auth-sleeping-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        /* ── Cancel link ── */
+        .auth-cancel {
+          background: none;
+          border: none;
+          color: #6366f1;
+          font-size: 0.8rem;
+          cursor: pointer;
+          padding: 0;
+          text-decoration: underline;
+          margin-top: 4px;
+          display: block;
+          font-family: 'Inter', sans-serif;
         }
 
         /* ── Form ── */
@@ -327,8 +495,35 @@ const Login = () => {
               <p className="auth-subtext">Sign in to your ChatWave account</p>
             </div>
 
+            {/* ── Error banner ── */}
             {error && (
               <div className="auth-error"><span>⚠️</span>{error}</div>
+            )}
+
+            {/* ── Server sleeping / waking banner ── */}
+            {serverMsg && (
+              <div className={`auth-sleeping ${serverMsg.startsWith('✅') ? 'success' : ''}`}>
+                <span className="auth-sleeping-icon">
+                  {serverMsg.startsWith('✅') ? '✅' : '😴'}
+                </span>
+                <div>
+                  <div>{serverMsg.startsWith('✅') ? serverMsg : serverMsg}</div>
+                  {isSleeping && (
+                    <>
+                      <div className="auth-sleeping-dots" style={{ marginTop: 6 }}>
+                        <span /><span /><span />
+                      </div>
+                      <button
+                        type="button"
+                        className="auth-cancel"
+                        onClick={() => { cancelPending(); setLoading(false); }}
+                      >
+                        Cancel and edit credentials
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
             )}
 
             <form onSubmit={handleSubmit} className="auth-form">
@@ -344,6 +539,7 @@ const Login = () => {
                   placeholder="you@example.com"
                   autoComplete="off"
                   required
+                  disabled={isSleeping}
                 />
               </div>
 
@@ -353,13 +549,14 @@ const Login = () => {
                   <input
                     id="login-password"
                     className="auth-input"
-                    type={showPass ? "text" : "password"}
+                    type={showPass ? 'text' : 'password'}
                     name="password"
                     value={credential.password}
                     onChange={ochange}
                     placeholder="••••••••"
                     autoComplete="off"
                     required
+                    disabled={isSleeping}
                   />
                   <button type="button" className="auth-eye" onClick={() => setShowPass(!showPass)}>
                     {showPass ? '🙈' : '👁️'}
@@ -375,8 +572,16 @@ const Login = () => {
                 <NavLink to="/forget-password" className="auth-link">Forgot password?</NavLink>
               </div>
 
-              <button type="submit" className="auth-submit" disabled={loading}>
-                {loading ? <span className="auth-spinner" /> : 'Sign In →'}
+              <button
+                type="submit"
+                id="login-submit"
+                className="auth-submit"
+                disabled={loading || isSleeping}
+              >
+                {(loading || isSleeping)
+                  ? <span className="auth-spinner" />
+                  : 'Sign In →'
+                }
               </button>
             </form>
 
@@ -389,7 +594,7 @@ const Login = () => {
             <div className="auth-google">
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
-                onError={() => setError("Google login failed.")}
+                onError={() => setError('Google login failed.')}
                 type="standard"
                 locale="en"
               />

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import MessageContext from '../context/message/MessageContext';
 
 const EMPTY_USER = {
@@ -41,17 +41,45 @@ const ChatList = ({ name, message, onClick, mutualfrdlen, profileUrl, frdlen, ti
     : null;
 
   useEffect(() => {
-    
-    const handler = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false); };
-    if (menuOpen) document.addEventListener('mousedown', handler);
+    if (!menuOpen) return ;
+
+    const handler = (e) => { 
+      if (menuRef.current && !menuRef.current.contains(e.target) && dotsBtnRef.current && !dotsBtnRef.current.contains(e.target))
+        setMenuOpen(false); 
+    };
+     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [menuOpen]);
 
+  // Close menu when mouse leaves the whole card 
+  const handleMouseLeave = ()=>{
+    setIsHovered(false);
+    setMenuOpen(false);
+
+  };
+
+  const handleDotsClick = (e) =>{
+    e.stopPropagation();
+    setMenuOpen (p => !p);
+  };
+
+
+  const closeChat = (e) =>{
+    const basePath = location.pathname.split('/').filter(Boolean);
+    const v1Index = basePath.indexOf("v1");
+    const endIndex = v1Index !== -1  ? v1Index : basePath.length;
+    /* console.info(`Closing chat, navigating to :${basePath.slice(0, endIndex).join('/')}`); */
+    
+    setSelectedUser(EMPTY_USER);
+    navigate(`/${basePath.slice(0, endIndex).join('/')}`);
+    setMenuOpen(false);
+
+  }
   return (
     <div
       className="relative flex items-center w-full cursor-pointer"
       onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => { setIsHovered(false); }}
+      onMouseLeave={ handleMouseLeave }
       onClick={onClick}
     >
       {/* Avatar */}
@@ -93,11 +121,12 @@ const ChatList = ({ name, message, onClick, mutualfrdlen, profileUrl, frdlen, ti
       </div>
 
       {/* ── Desktop only: hover 3-dot menu ── */}
-      {isHovered && (
-        <div ref={menuRef} className="hidden md:flex items-center flex-shrink-0 ml-1"
+      {isHovered  && (
+        <div  className="hidden md:flex items-center flex-shrink-0 ml-1"
           onClick={e => e.stopPropagation()}>
           <button
-            onClick={e => { e.stopPropagation(); setMenuOpen(p => !p); }}
+            ref = {dotsBtnRef}
+            onClick={handleDotsClick}
             className="p-1.5 rounded-full hover:bg-gray-200 transition-colors text-gray-400 hover:text-gray-700"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
@@ -106,17 +135,36 @@ const ChatList = ({ name, message, onClick, mutualfrdlen, profileUrl, frdlen, ti
           </button>
 
           {menuOpen && (
-            <div className="absolute right-0 top-9 z-50 w-44 bg-white rounded-xl shadow-xl border border-gray-100 py-1">
+            <div
+              ref={menuRef}
+              className="absolute right-0 top-9 z-50 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1"
+            >
+              {/* Open chat */}
+              {!Selecteduser?.receiverId && 
               <button
-                onClick={e => { e.stopPropagation(); setSelectedUser(EMPTY_USER); setMenuOpen(false); }}
+                onClick={(e) => { e.stopPropagation(); onClick(); setMenuOpen(false); }}
                 className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-gray-500">
-                  <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22Z" />
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-indigo-400">
+                  <path fillRule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H6l-4 4V5z" clipRule="evenodd" />
                 </svg>
-                Close Chat
+                Open Chat
               </button>
-            </div>
+              }
+
+              {/* Close chat — only show if this person's chat is currently open */}
+              {Selecteduser?.receiverId && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); closeChat();  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-gray-400">
+                    <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22Z" />
+                  </svg>
+                  Close Chat
+                </button>
+              )}
+               </div>
           )}
         </div>
       )}
