@@ -127,7 +127,8 @@ const googleLogin = async()=>{
       console.error("Error refreshing token:", error);
       throwFriendlyError(error);
     }
-  }, [])
+  }, []);
+  
 
   // Set up axios interceptors synchronously on first render so that
   // any initial requests (like fetchUser in child components) are intercepted correctly.

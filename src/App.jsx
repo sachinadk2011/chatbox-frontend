@@ -194,13 +194,11 @@ function AppContent() {
           profile_Url: userData.user.profile_Url,
           public_id: userData.user.public_id,
         });
-        if (
-          location.pathname === '/login' ||
-          location.pathname === '/signup' ||
-          location.pathname === '/'
-        ) {
-          navigate('/chats');
-        }
+        // ✅ Only redirect if on a page that has nothing to show logged-in users
+      const currentPath = window.location.pathname;
+      const isAuthPage = [...AUTH_PAGES, '/'].includes(currentPath);
+      if (isAuthPage) navigate("/chats");
+      // If already at /chats/v1/u/abc123 or /friends/list — stay exactly there
       }
     } catch (error) {
       if (error.response?.status === 401) {

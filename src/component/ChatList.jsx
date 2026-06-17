@@ -7,8 +7,25 @@ const EMPTY_USER = {
   lastActive: null, onlineStatus: false, profile_url: null,
 };
 
-const ChatList = ({ name, message, onClick, mutualfrdlen, profileUrl, frdlen }) => {
-  const navigate = useNavigate();
+// ── Mini tick for sidebar ─────────────────────────────────────────
+const SidebarTick = ({ status }) => {
+  if (status === 'sent') {
+    return (
+      <svg viewBox="0 0 16 11" className="w-3.5 h-2.5 inline-block flex-shrink-0" fill="none">
+        <path d="M1 5.5L5.5 10L15 1" stroke="#9ca3af" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  const isRead = status === 'read';
+  return (
+    <svg viewBox="0 0 22 11" className="w-4 h-2.5 inline-block flex-shrink-0" fill="none">
+      <path d="M1 5.5L5.5 10L15 1"  stroke={isRead ? '#3b82f6' : '#9ca3af'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M7 5.5L11.5 10L21 1" stroke={isRead ? '#3b82f6' : '#9ca3af'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+};
+
+const ChatList = ({ name, message, onClick, mutualfrdlen, profileUrl, frdlen, time, status, isOwn }) => {
   const { Selecteduser, setSelectedUser } = useContext(MessageContext);
   const location = useLocation();
   const isFriendsPage = location.pathname.startsWith('/friends');
@@ -16,6 +33,7 @@ const ChatList = ({ name, message, onClick, mutualfrdlen, profileUrl, frdlen }) 
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const dotsBtnRef = useRef(null);
+  
 
   const profile_url = `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'U')}&background=random&color=random&bold=true&rounded=true`;
   const resizedUrl = profileUrl
@@ -70,7 +88,15 @@ const ChatList = ({ name, message, onClick, mutualfrdlen, profileUrl, frdlen }) 
 
       {/* Name + sub-text — depends on which page we're on */}
       <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-1">
         <h2 className="text-sm font-semibold text-gray-800 truncate">{name}</h2>
+        {/* ── Time — top right ── */}
+          {time && !isFriendsPage && (
+            <span className="text-[11px] text-gray-400 flex-shrink-0 whitespace-nowrap">
+              {time}
+            </span>
+          )}
+        </div>
         {isFriendsPage
           /* Friends page: always show mutual friends count */
           ? <div className="flex space-x-3 text-xs text-gray-500">
@@ -78,9 +104,19 @@ const ChatList = ({ name, message, onClick, mutualfrdlen, profileUrl, frdlen }) 
               <span><strong>{frdlen ?? 0}</strong> Friends</span>
             </div>
           /* Chat home: show last message preview */
-          : <p className="text-xs text-gray-500 truncate">
+          : (
+          /* ── Preview row: tick (if own) + message text ── */
+          <div className="flex items-center gap-1 min-w-0">
+            {/* Show tick only for messages I sent */}
+            {isOwn && status && (
+              <span className="flex-shrink-0">
+                <SidebarTick status={status} />
+              </span>
+            )}
+          <p className="text-xs text-gray-500 truncate">
               {message || <span className="italic text-gray-400">Tap to start chatting</span>}
             </p>
+            </div>)
         }
       </div>
 
