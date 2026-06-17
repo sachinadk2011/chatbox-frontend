@@ -24,10 +24,7 @@ const MessageBox = () => {
     ...olderMessages.filter(m => !contextIds.has(m._id)),
     ...contextMessages,
   ];
-  console.log(
-  "contextChat:",
-  JSON.stringify(contextChat, null, 2)
-);
+  
 
   const scrollToBottom = useCallback((behavior = 'auto') => {
     bottomRef.current?.scrollIntoView({ behavior, block: 'end' });

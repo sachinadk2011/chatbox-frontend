@@ -39,9 +39,9 @@ function AppContent() {
   const { setSelectedUser } = useContext(MessageContext);
   const location = useLocation();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const authPages = ['/login', '/signup', '/verify-otp', '/forget-password', '/set-new-password'];
 
-  const hideSidebar = ['/login', '/signup', '/verify-otp', '/forget-password', '/set-new-password']
-    .includes(location.pathname);
+  const hideSidebar = authPages.includes(location.pathname);
 
   // ── Close chat on ANY route change (going to / from /friends also closes) ──
   useEffect(() => {
@@ -62,7 +62,11 @@ function AppContent() {
           onlineStatus: userData.user.onlineStatus, lastActive: userData.user.lastActive,
           profile_Url: userData.user.profile_Url, public_id: userData.user.public_id,
         });
-        navigate("/chats");
+        // ✅ Only redirect if on a page that has nothing to show logged-in users
+      const currentPath = window.location.pathname;
+      const isAuthPage = [...authPages, '/'].includes(currentPath);
+      if (isAuthPage) navigate("/chats");
+      // If already at /chats/v1/u/abc123 or /friends/list — stay exactly there
       }
     } catch (error) {
       if (error.response?.status === 401) {

@@ -107,7 +107,7 @@ const googleLogin = async()=>{
       console.error("Error refreshing token:", error);
       throw new Error( error.response?.data.error||error.response?.data.msg || error.response?.data.message || error.message || { success: false, message:error.error || "Something went wrong" });
     }
-  })
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem("token");

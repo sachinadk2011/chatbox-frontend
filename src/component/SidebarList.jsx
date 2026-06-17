@@ -46,10 +46,10 @@ const SidebarList = () => {
    
   }catch(error){
    
-    console.error("Error in sidebarlist useeffect:", error);
-    if (!error.success){
-      navigate("/login");
-    }
+    console.error("Error in sidebarlist:", error);
+  if (error.response?.status === 401) {
+    navigate("/login"); // only real auth failures
+  }
   }
     }
     fetchdata();
