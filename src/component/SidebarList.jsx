@@ -67,7 +67,6 @@ const SidebarList = () => {
  
   const lastMsg = friends.map(frd => {
   const chat = messages.find(msg => msg.otherUserId === frd._id.toString());
-
   let previewText = "Tap to start messaging";
   let lastMsgTime = null;
   let lastMsgStatus = null;
@@ -103,6 +102,8 @@ const SidebarList = () => {
     isOwn:   isLastMsgMine,
   };
 });
+
+
 
     const DisplayChat = (friend) => {
         setSelectedUser({
