@@ -67,20 +67,28 @@ const SidebarList = () => {
  
   const lastMsg = friends.map(frd => {
   const chat = messages.find(msg => msg.otherUserId === frd._id.toString());
-
   let previewText = "Tap to start messaging";
   let lastMsgTime = null;
   let lastMsgStatus = null;
   let isLastMsgMine = false;
+  let unreadCount = 0;
+  let rawDate = null;
 
   if (chat && chat.messages.length > 0) {
     const lastMessage = chat.messages[chat.messages.length - 1];
+    
 
     // Is the last message mine?
     isLastMsgMine = lastMessage.sender?._id?.toString() === user?.id?.toString();
     lastMsgStatus = lastMessage.status;
     const date = lastMessage.date;
     lastMsgTime   = date ? getSidebarDateLabel({  date }) : null;
+    rawDate = date ?? null;
+
+    unreadCount = chat.messages.filter(msg => {
+      console.info("Checking unread for msg: ", msg, "\n against user: ", user);
+      return msg.sender?._id?.toString() !== user?.id?.toString() && msg.status !== "read";
+    }).length;
 
     const rawText  = lastMessage.message ?? '';
     const msgTypes = lastMessage.types || 'text';
@@ -101,8 +109,12 @@ const SidebarList = () => {
     time:    lastMsgTime,
     status:  lastMsgStatus,
     isOwn:   isLastMsgMine,
+    unreadCount,
+    rawDate
   };
 });
+
+
 
     const DisplayChat = (friend) => {
         setSelectedUser({
@@ -123,20 +135,32 @@ const SidebarList = () => {
     navigate(`/${basePath.slice(0, endIndex).join('/')}/v1/u/${friend._id}`);    
   
 }
+
+const sortedFriends = [...friends].sort(
+  (a,b)=>{
+    const aDate = lastMsg.find(m => m.frdId === a._id)?.rawDate;
+  const bDate = lastMsg.find(m => m.frdId === b._id)?.rawDate;
+  console.info(`Sorting friends: comparing ${a.name} (last msg at ${aDate}) with ${b.name} (last msg at ${bDate})`);
+  return (bDate ? new Date(bDate) : 0) - (aDate ? new Date(aDate) : 0);
+  }
+)
+console.info("sorted frd: ", sortedFriends)
     //console.log("1"+messages[length-1]?.sender?.name, user?.name);
     
     return(
         <>
               <div className="overflow-y-auto h-full p-3 pb-4">
-          {friends.map((element)=>{
+          {sortedFriends.map((element)=>{
+            const msgData = lastMsg.find(msg => msg.frdId === element._id);
             return(
             <div key={element._id} className="flex items-center mb-4 cursor-pointer hover:bg-gray-100 p-2 rounded-md">
               <ChatList
                 name={element.name}
-                message={lastMsg.find(msg => msg.frdId === element._id)?.message}
-                time={lastMsg.find(msg => msg.frdId === element._id)?.time}
-                status={lastMsg.find(msg => msg.frdId === element._id)?.status}
-                isOwn={lastMsg.find(msg => msg.frdId === element._id)?.isOwn}
+                message={msgData?.message}
+                time={msgData?.time}
+                status={msgData?.status}
+                isOwn={msgData?.isOwn}
+                unreadCount={msgData?.unreadCount}
                 onClick={() => DisplayChat(element)}
                 mutualfrdlen={element.mutualfrdlen}
                 profileUrl={element.profile_Url}
