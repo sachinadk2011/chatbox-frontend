@@ -33,6 +33,10 @@ const ChatList = ({ name, message, onClick, mutualfrdlen, profileUrl, frdlen, ti
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const dotsBtnRef = useRef(null);
+  const hasUnread = unreadCount > 0 && !isFriendsPage ;
+  const previewMessage = hasUnread && unreadCount > 1 ? unreadCount <= 4 ? `new message's ${unreadCount}` : `new messages 4+` : message;
+
+  
   
 
   const profile_url = `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'U')}&background=random&color=random&bold=true&rounded=true`;

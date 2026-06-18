@@ -44,7 +44,7 @@ const SidebarList = () => {
    
   }catch(error){
    
-    console.error("Error in sidebarlist:", error);
+    /* console.error("Error in sidebarlist:", error); */
 
     const isAuth = error.response?.status === 401
       || error.status === 401       // set by interceptor on refresh failure
@@ -81,6 +81,11 @@ const SidebarList = () => {
     lastMsgStatus = lastMessage.status;
     const date = lastMessage.date;
     lastMsgTime   = date ? getSidebarDateLabel({  date }) : null;
+    rawDate = date ?? null;
+
+    unreadCount = chat.messages.filter(msg => {
+      return msg.sender?._id?.toString() !== user?.id?.toString() && msg.status !== "read";
+    }).length;
 
     const rawText  = lastMessage.message ?? '';
     const msgTypes = lastMessage.types || 'text';
@@ -118,12 +123,21 @@ const SidebarList = () => {
   let basePath =  location.pathname.split('/').filter(Boolean)
   let v1Index = basePath.indexOf("v1");
   let endIndex = v1Index !== -1  ? v1Index : basePath.length;
-  console.info(`Navigating to chat :${basePath} \n ${basePath.slice(0, endIndex).join('/')}/v1/u/${friend._id}`);  
+  /* console.info(`Navigating to chat :${basePath} \n ${basePath.slice(0, endIndex).join('/')}/v1/u/${friend._id}`); */  
   
     navigate(`/${basePath.slice(0, endIndex).join('/')}/v1/u/${friend._id}`);    
   
 }
-    //console.log("1"+messages[length-1]?.sender?.name, user?.name);
+
+const sortedFriends = [...friends].sort(
+  (a,b)=>{
+    const aDate = lastMsg.find(m => m.frdId === a._id)?.rawDate;
+    const bDate = lastMsg.find(m => m.frdId === b._id)?.rawDate;
+  
+  return (bDate ? new Date(bDate) : 0) - (aDate ? new Date(aDate) : 0);
+  }
+)
+
     
     return(
         <>
