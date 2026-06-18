@@ -67,14 +67,16 @@ const SidebarList = () => {
  
   const lastMsg = friends.map(frd => {
   const chat = messages.find(msg => msg.otherUserId === frd._id.toString());
-
   let previewText = "Tap to start messaging";
   let lastMsgTime = null;
   let lastMsgStatus = null;
   let isLastMsgMine = false;
+  let unreadCount = 0;
+  let rawDate = null;
 
   if (chat && chat.messages.length > 0) {
     const lastMessage = chat.messages[chat.messages.length - 1];
+    
 
     // Is the last message mine?
     isLastMsgMine = lastMessage.sender?._id?.toString() === user?.id?.toString();
@@ -106,8 +108,12 @@ const SidebarList = () => {
     time:    lastMsgTime,
     status:  lastMsgStatus,
     isOwn:   isLastMsgMine,
+    unreadCount,
+    rawDate
   };
 });
+
+
 
     const DisplayChat = (friend) => {
         setSelectedUser({
@@ -142,15 +148,17 @@ const sortedFriends = [...friends].sort(
     return(
         <>
               <div className="overflow-y-auto h-full p-3 pb-4">
-          {friends.map((element)=>{
+          {sortedFriends.map((element)=>{
+            const msgData = lastMsg.find(msg => msg.frdId === element._id);
             return(
             <div key={element._id} className="flex items-center mb-4 cursor-pointer hover:bg-gray-100 p-2 rounded-md">
               <ChatList
                 name={element.name}
-                message={lastMsg.find(msg => msg.frdId === element._id)?.message}
-                time={lastMsg.find(msg => msg.frdId === element._id)?.time}
-                status={lastMsg.find(msg => msg.frdId === element._id)?.status}
-                isOwn={lastMsg.find(msg => msg.frdId === element._id)?.isOwn}
+                message={msgData?.message}
+                time={msgData?.time}
+                status={msgData?.status}
+                isOwn={msgData?.isOwn}
+                unreadCount={msgData?.unreadCount}
                 onClick={() => DisplayChat(element)}
                 mutualfrdlen={element.mutualfrdlen}
                 profileUrl={element.profile_Url}

@@ -25,9 +25,10 @@ const SidebarTick = ({ status }) => {
   );
 };
 
-const ChatList = ({ name, message, onClick, mutualfrdlen, profileUrl, frdlen, time, status, isOwn }) => {
+const ChatList = ({ name, message, onClick, mutualfrdlen, profileUrl, frdlen, time, status, isOwn, unreadCount }) => {
   const { Selecteduser, setSelectedUser } = useContext(MessageContext);
   const location = useLocation();
+  const navigate = useNavigate();
   const isFriendsPage = location.pathname.startsWith('/friends');
   const [isHovered, setIsHovered] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -93,10 +94,10 @@ const ChatList = ({ name, message, onClick, mutualfrdlen, profileUrl, frdlen, ti
       {/* Name + sub-text — depends on which page we're on */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-1">
-        <h2 className="text-sm font-semibold text-gray-800 truncate">{name}</h2>
+        <h2 className={`text-sm  ${hasUnread && !isOwn && !isFriendsPage ? "font-black text-black": "font-semibold text-gray-800"} truncate`}>{name}</h2>
         {/* ── Time — top right ── */}
           {time && !isFriendsPage && (
-            <span className="text-[11px] text-gray-400 flex-shrink-0 whitespace-nowrap">
+            <span className={`text-[11px] ${hasUnread && !isFriendsPage && !isOwn ? "font-black text-black": "text-gray-400"} flex-shrink-0 whitespace-nowrap`}>
               {time}
             </span>
           )}
@@ -117,8 +118,8 @@ const ChatList = ({ name, message, onClick, mutualfrdlen, profileUrl, frdlen, ti
                 <SidebarTick status={status} />
               </span>
             )}
-          <p className="text-xs text-gray-500 truncate">
-              {message || <span className="italic text-gray-400">Tap to start chatting</span>}
+          <p className={`text-xs  ${hasUnread && !isFriendsPage && !isOwn ? "font-black text-black": "text-gray-500"} truncate`}>
+              {previewMessage || <span className="italic text-gray-400">Tap to start chatting</span>}
             </p>
             </div>)
         }
