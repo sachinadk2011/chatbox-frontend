@@ -116,15 +116,24 @@ export const MessageState = (props) => {
 const totalUnread = useMemo (() =>{
   if (!user?.id) return 0;
   const myId = user.id.toString();
+  const uniqueChats = new Set();
+  console.info("unique chats for unread count: ", uniqueChats);
   return messages.reduce((sum, chat) => {
-    const senderId = chat.messages[0]?.sender?._id?.toString();
-    if (!senderId || senderId === myId) return sum;
-    const unreadCount = chat.messages.reduce((c, m) => 
-      c + (m.sender?._id?.toString() === senderId && m.status !== 'read' ? 1 : 0)
-    , 0);
-    return sum + unreadCount;
+    console.info("chats :", chat);
+    const unreadChat = chat.messages.filter(m=> {
+      if (m.sender?._id?.toString() !== myId && m.status !== 'read' && !uniqueChats.has(chat.otherUserId)){
+        uniqueChats.add(chat.otherUserId);
+        return true;
+      }
+      return false;
+    }).length;
+    console.info("unreadchat: ", unreadChat);
+    
+    return sum + unreadChat;
   }, 0);
-})
+}, [messages, user?.id]);
+console.info("total read from msg state :", totalUnread);
+console.info("mesages change or not : ", messages);
 
 
   // ── messagesRead → turn ticks blue ────────────────────────────────────────
