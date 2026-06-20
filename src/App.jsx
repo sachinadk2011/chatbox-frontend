@@ -27,6 +27,7 @@ import ServerWakingBanner from './component/ServerWakingBanner';
 import { subscribeBackendStatus, getBackendStatus, isDevEnvironment, markBackendOnline } from './utils/backendStatus';
 import { getTokenExpiry } from './utils/tokenUtils';
 import axios from 'axios';
+import { requestNotificationPermission} from './utils/notificationUtils';
 
 const EMPTY_USER = {
   receiverId: null, receiverName: '', senderId: null, senderName: '',
@@ -149,7 +150,7 @@ function StatusGate({ children }) {
 function AppContent() {
   const navigate = useNavigate();
   const { getUser, setUser, user, RefreshToken } = useContext(UserContext);
-  const { setSelectedUser } = useContext(MessageContext);
+  const { setSelectedUser, totalUnread, markAsRead  } = useContext(MessageContext);
   const location = useLocation();
   const [isOnline, setIsOnline] = useState(navigator.onLine); // eslint-disable-line no-unused-vars
 
@@ -177,6 +178,29 @@ function AppContent() {
       });
     }
   }, [location.pathname, setSelectedUser]);
+
+
+// ── Ask for notification permission once user is logged in ──
+useEffect(() => {
+  if (user?.id) requestNotificationPermission();
+}, [user?.id]);
+
+// ── Update browser tab title with unread count ──
+useEffect(() => {
+  document.title = totalUnread > 0
+    ? `(${totalUnread > 99 ? '99+' : totalUnread}) Chat Waves`
+    : 'Chat Waves - Real-time Chat App';
+}, [totalUnread]);
+
+// ── Handle notification click → navigate to that chat (no page reload) ──
+useEffect(() => {
+  const handler = (e) => {
+    console.info('Notification click event received:', e);
+    markAsRead(e.detail.senderId);
+    navigate(`/chats/v1/u/${e.detail.senderId}`);}
+  window.addEventListener('navigateToChat', handler);
+  return () => window.removeEventListener('navigateToChat', handler);
+}, [navigate]);
 
   const fetchUser = useCallback(async () => {
     const token = localStorage.getItem('token');

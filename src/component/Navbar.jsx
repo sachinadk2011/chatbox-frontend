@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import UserContext from '../context/users/UserContext';
+import MessageContext from '../context/message/MessageContext';
 
 /**
  * Navbar
@@ -12,6 +13,7 @@ import UserContext from '../context/users/UserContext';
  */
 const Navbar = () => {
   const { user, logout, setUser } = React.useContext(UserContext);
+  const { totalUnread } = React.useContext(MessageContext);
 
   const profile_url = `https://ui-avatars.com/api/?name=${user?.name}&background=6366f1&color=fff&bold=true&rounded=true`;
   const resizedUrl = user.profile_Url
@@ -144,10 +146,33 @@ const Navbar = () => {
         {/* Nav links */}
         <nav className="flex flex-col items-center gap-2 flex-1">
           {navItems.map((item) => (
-            <NavLink key={item.key} to={item.path} end={!['home', 'friends'].includes(item.key)} className={desktopLink} title={item.label}>
+            <NavLink 
+            key={item.key} 
+            to={item.path} 
+            end={!['home', 'friends'].includes(item.key)} 
+            className={desktopLink} 
+            title={item.label}
+            >
+
               {({ isActive }) => (
                 <>
-                  {item.icon(isActive)}
+                  {/* Icon with optional unread badge */}
+                  <div className="relative">
+                    {item.icon(isActive)}
+
+                    {/* Badge — only on the Chats icon */}
+                    {item.key === 'home' && totalUnread > 0 && (
+            <span className="
+              absolute -top-1.5 -right-1.5
+              bg-red-500 text-white
+              text-[9px] font-bold leading-none
+              rounded-full min-w-[16px] h-4
+              flex items-center justify-center px-0.5
+            ">
+              {totalUnread > 99 ? '99+' : totalUnread}
+            </span>
+          )}
+        </div>
                   <Tip label={item.label} />
                 </>
               )}
@@ -206,10 +231,29 @@ const Navbar = () => {
 
         {/* Nav items */}
         {navItems.map((item) => (
-          <NavLink key={item.key} to={item.path} end={!['home', 'friends'].includes(item.key)} className={mobileLink}>
+          <NavLink 
+          key={item.key} 
+          to={item.path} 
+          end={!['home', 'friends'].includes(item.key)} 
+          className={mobileLink}
+          >
+
             {({ isActive }) => (
               <>
-                {item.icon(isActive)}
+                <div className="relative">
+          {item.icon(isActive)}
+          {item.key === 'home' && totalUnread > 0 && (
+            <span className="
+              absolute -top-1.5 -right-1.5
+              bg-red-500 text-white
+              text-[9px] font-bold leading-none
+              rounded-full min-w-[16px] h-4
+              flex items-center justify-center px-0.5
+            ">
+              {totalUnread > 99 ? '99+' : totalUnread}
+            </span>
+          )}
+        </div>
                 <span className={`text-[10px] font-medium leading-none ${isActive ? 'text-indigo-600' : 'text-gray-400'}`}>
                   {item.label}
                 </span>
