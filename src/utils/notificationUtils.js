@@ -10,6 +10,11 @@ export const requestNotificationPermission = async () =>{
     return await Notification.requestPermission();
 };
 
+export const getNotificationStatus = () => {
+     if (!('Notification' in window)) return 'unsupported';
+     return Notification.permission; // default or granted or denied
+};
+
 const getPreview = (msg, types) =>{
     if (types === 'image')    return '📷 Photo';
   if (types === 'video')    return '🎥 Video';

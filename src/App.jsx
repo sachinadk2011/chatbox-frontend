@@ -28,6 +28,7 @@ import { subscribeBackendStatus, getBackendStatus, isDevEnvironment, markBackend
 import { getTokenExpiry } from './utils/tokenUtils';
 import axios from 'axios';
 import { requestNotificationPermission} from './utils/notificationUtils';
+import NotificationPrompt from './component/NotificationPrompt';
 
 const EMPTY_USER = {
   receiverId: null, receiverName: '', senderId: null, senderName: '',
@@ -314,7 +315,13 @@ useEffect(() => {
           : { height: '100dvh' }      // chat pages: fixed viewport
       }
     >
-      {user?.id && !hideSidebar && <Navbar />}
+      {user?.id && !hideSidebar &&
+        <>
+        <Navbar />
+        {/* <NotificationPrompt /> */}
+        </>
+    }
+      
 
       {/* Prod/non-dev: non-blocking sleeping overlay for Render cold-starts */}
       {!isDevEnvironment() && <ServerWakingBanner />}
