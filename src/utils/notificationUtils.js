@@ -2,18 +2,17 @@
 // senderId -> string[] (preview of each unread msg)
 const pendingMsgMap = new Map();
 
-/* Ask the user for the notification permisssion (call once on login) */
-export const requestNotificationPermission = async () =>{
-    if (!('Notification' in window)) return 'unsupported';
-    if (Notification.permission === 'granted') return 'granted';
-    if (Notification.permission === 'denied') return 'denied';
-    return await Notification.requestPermission();
-};
-
 export const getNotificationStatus = () => {
      if (!('Notification' in window)) return 'unsupported';
      return Notification.permission; // default or granted or denied
 };
+/* Ask the user for the notification permisssion (call once on login) */
+export const requestNotificationPermission = async () =>{
+    const notificationStatus = getNotificationStatus();
+    if (notificationStatus === "default")  return await Notification.requestPermission();
+    return notificationStatus; // already granted or denied or unsupported
+};
+
 
 const getPreview = (msg, types) =>{
     if (types === 'image')    return '📷 Photo';
