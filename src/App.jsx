@@ -181,11 +181,6 @@ function AppContent() {
   }, [location.pathname, setSelectedUser]);
 
 
-// ── Ask for notification permission once user is logged in ──
-useEffect(() => {
-  if (user?.id) requestNotificationPermission();
-}, [user?.id]);
-
 // ── Update browser tab title with unread count ──
 useEffect(() => {
   document.title = totalUnread > 0
@@ -318,7 +313,7 @@ useEffect(() => {
       {user?.id && !hideSidebar &&
         <>
         <Navbar />
-        {/* <NotificationPrompt /> */}
+        <NotificationPrompt />
         </>
     }
       
