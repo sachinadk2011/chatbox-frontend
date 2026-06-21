@@ -3,6 +3,7 @@ import React, { useState, useCallback, useContext, useEffect, useRef, useMemo } 
 import UserContext from "../users/UserContext";
 import socket from "../../server/socket";
 import { api } from '../../utils/SetAuthToken';
+import { showChatNotification, clearNotificationsForSender } from "../../utils/notificationUtils";
 
 export const MessageState = (props) => {
   const { user } = useContext(UserContext);
@@ -36,6 +37,7 @@ export const MessageState = (props) => {
   if (resolved?.receiverId) {
     console.info(`Setting selected user to ${resolved.receiverName} (${resolved.receiverId}). Informing server of chat change.`);
     socket.emit('chatOpen', { viewingUserId: resolved.receiverId });
+    clearNotificationsForSender(resolved.receiverId);
   }
 
   selectedUserRef.current = resolved;
@@ -77,6 +79,8 @@ export const MessageState = (props) => {
       const frdId    = senderId === myId
             ? msg.receiver?._id?.toString()
             : senderId;
+
+      // existing state update      
       setMessages(prev => {
         let updated = [...prev];
         let chat = updated.find(c => c.otherUserId === frdId);
@@ -90,11 +94,48 @@ export const MessageState = (props) => {
         }
         return updated;
       });
-    };
+   
+
+    // show notification for incoming messages 
+    const isIncoming = senderId && senderId !== myId;
+    const isViewingThisChat = selectedUserRef.current?.receiverId?.toString() === senderId;
     
+    if (isIncoming && !isViewingThisChat){
+      showChatNotification({
+        senderName: msg.sender?.name || "Someone",
+        message: msg.message,
+        types: msg.types,
+        senderId
+      });
+    }
+  };
     socket.on("receiveMessage", handler);
     return () => socket.off("receiveMessage", handler);
   }, [user?.id]);
+
+// Total unread messages across all the conversations - for navbar badge + tab title 
+const totalUnread = useMemo (() =>{
+  if (!user?.id) return 0;
+  const myId = user.id.toString();
+  const uniqueChats = new Set();
+  console.info("unique chats for unread count: ", uniqueChats);
+  return messages.reduce((sum, chat) => {
+    console.info("chats :", chat);
+    const unreadChat = chat.messages.filter(m=> {
+      if (m.sender?._id?.toString() !== myId && m.status !== 'read' && !uniqueChats.has(chat.otherUserId)){
+        uniqueChats.add(chat.otherUserId);
+        return true;
+      }
+      return false;
+    }).length;
+    console.info("unreadchat from msg state totalunread : ", unreadChat);
+    
+    return sum + unreadChat;
+  }, 0);
+}, [messages, user?.id]);
+console.info("total unread from msg state :", totalUnread);
+console.info("mesages change or not : ", messages);
+
 
   // ── messagesRead → turn ticks blue ────────────────────────────────────────
   useEffect(() => {
@@ -175,7 +216,7 @@ export const MessageState = (props) => {
 messages, setMessages,
       Selecteduser, setSelectedUser: setSelectedUserWithRef,
       fetchMessages, fetchConversation, sendMessage, markAsRead,
-      drafts, setDraft
+      drafts, setDraft, totalUnread
   }), [messages, Selecteduser, drafts]);
   return (
     <MessageContext.Provider value={value}>
