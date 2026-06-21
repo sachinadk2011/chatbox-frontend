@@ -1,4 +1,6 @@
-
+// module-level Map persists across calls - survives React re-renders
+// senderId -> string[] (preview of each unread msg)
+const pendingMsgMap = new Map();
 
 /* Ask the user for the notification permisssion (call once on login) */
 export const requestNotificationPermission = async () =>{
@@ -6,6 +8,16 @@ export const requestNotificationPermission = async () =>{
     if (Notification.permission === 'granted') return 'granted';
     if (Notification.permission === 'denied') return 'denied';
     return await Notification.requestPermission();
+};
+
+const getPreview = (msg, types) =>{
+    if (types === 'image')    return '📷 Photo';
+  if (types === 'video')    return '🎥 Video';
+  if (types === 'multiple') return '📎 Attachments';
+  if (types === 'audio')    return '🎤 Audio';
+  if (types === 'file')     return '📁 File';
+  const text = msg ?? '';
+  return text.length > 55 ? text.slice(0, 55) + '…' : text;
 };
 
 /**
@@ -18,17 +30,30 @@ export const showChatNotification = ({ senderName, message, types, senderId}) =>
      if (!('Notification' in window)) return;
      if (Notification.permission !== 'granted') return;
 
-     // BUild a readable message preview
-     let msgPreview = message ?? "";
-     if (types === 'image') msgPreview = "sent a photo 📷 "
-     else if (types === 'video') msgPreview = "sent a video 🎥"
-     else if (types === 'multiple') msgPreview = "sent an attachment 📎"
-     else if (types === 'audio') msgPreview = "sent an audio message 🎤"
-     else if (types === 'file') msgPreview = "sent a file 📁"
-     else if (msgPreview.length > 50 ) msgPreview = msgPreview.slice(0, 50) + "...";
+     // Accumulate all messages from this sender
+     const msg = pendingMsgMap.get(senderId) || [];
+     msg.push(getPreview(message, types));
+     pendingMsgMap.set(senderId, msg);
 
+     const count = msg.length;
+
+    // Build notification content
+    const title = count > 1 ? `${senderName} · ${count} new messages`
+    : senderName;
+
+    // Show last 4 messages, with overflow hint if more
+  const shown    = msg.slice(-4);
+  const overflow = count - shown.length;
+  const body     = [
+    overflow > 0 ? `↑ ${overflow} earlier message${overflow > 1 ? 's' : ''}` : null,
+    ...shown,
+  ].filter(Boolean).join('\n');
+
+      // ── Show (or REPLACE existing) notification ───────
+  // Same `tag` = browser replaces the old one in-place with the new content
+  // `renotify: true` = still plays sound/vibrates on each update
      const notification = new Notification(senderName, {
-        body: msgPreview,
+        body,
         icon: '/icon/android-chrome-192x192.png',
         badge: '/icon/favicon-32x32.png',
         tag: `chat-${senderId}`, // Unique tag for this chat
@@ -39,14 +64,23 @@ export const showChatNotification = ({ senderName, message, types, senderId}) =>
      notification.onclick = () =>{
         window.focus();
         notification.close();
+        pendingMsgMap.delete(senderId); // clear the pending msg on click
         // custom event -> app.jsz listens and calls the navigate()- no page reload
         window.dispatchEvent(
-            new CustomEvent('navigateToChat', { detail: { senderId } })
+            new CustomEvent('navigateToChat', { detail: {  senderId } })
         );
      };
+
+};
+/* call when user open chats - clear the accumulator so the 
+next notification from this person starts fresh from 1 again.
+*/
+     export const clearNotificationsForSender = (senderId) => {
+  if (!senderId) return;
+  pendingMsgMap.delete(senderId);
+};
 
      //setTimeout(() => notification.close(), 6000);
     
 
 
-};

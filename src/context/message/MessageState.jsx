@@ -3,7 +3,7 @@ import React, { useState, useCallback, useContext, useEffect, useRef, useMemo } 
 import UserContext from "../users/UserContext";
 import socket from "../../server/socket";
 import { api } from '../../utils/SetAuthToken';
-import { showChatNotification } from "../../utils/notificationUtils";
+import { showChatNotification, clearNotificationsForSender } from "../../utils/notificationUtils";
 
 export const MessageState = (props) => {
   const { user } = useContext(UserContext);
@@ -37,6 +37,7 @@ export const MessageState = (props) => {
   if (resolved?.receiverId) {
     console.info(`Setting selected user to ${resolved.receiverName} (${resolved.receiverId}). Informing server of chat change.`);
     socket.emit('chatOpen', { viewingUserId: resolved.receiverId });
+    clearNotificationsForSender(resolved.receiverId);
   }
 
   selectedUserRef.current = resolved;
@@ -127,12 +128,12 @@ const totalUnread = useMemo (() =>{
       }
       return false;
     }).length;
-    console.info("unreadchat: ", unreadChat);
+    console.info("unreadchat from msg state totalunread : ", unreadChat);
     
     return sum + unreadChat;
   }, 0);
 }, [messages, user?.id]);
-console.info("total read from msg state :", totalUnread);
+console.info("total unread from msg state :", totalUnread);
 console.info("mesages change or not : ", messages);
 
 
