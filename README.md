@@ -1,70 +1,104 @@
-# Getting Started with Create React App
+<div align="center">
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# 💬 ChatWave — Frontend
 
-## Available Scripts
+**A modern, real-time React application.**
 
-In the project directory, you can run:
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-%F0%9F%9A%80-indigo?style=for-the-badge)](https://chatwaves.sachinadhikari.com.np/chats)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react)](https://react.dev)
+[![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite)](https://vitejs.dev/)
 
-### `npm start`
+[**→ Open Live Demo**](https://chatwaves.sachinadhikari.com.np/chats)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+</div>
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+---
 
-### `npm test`
+## ✨ Overview
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+This is the frontend repository for **ChatWave**, a full-stack real-time messaging application. It is built focusing on speed, responsiveness, and a highly resilient user experience, handling server sleeping states gracefully without breaking the UI.
 
-### `npm run build`
+## 🛠️ Tech Stack
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- **React 19** + **Vite 8** — Fast builds and modern React features.
+- **React Router v7** — Client-side routing.
+- **Tailwind CSS** — Utility-first styling for a beautiful, responsive UI.
+- **Socket.IO Client** — Real-time event handling.
+- **Axios** — HTTP client with interceptors for token refresh and offline detection.
+- **@react-oauth/google** — Google one-tap authentication.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+---
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## 🔒 Environment Variables
 
-### `npm run eject`
+To run this project locally, create a `.env` file in the root directory. 
+**Note: Do not expose real secrets in your public repositories.**
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```env
+# Backend Base URL (e.g., http://localhost:8000 for local development 
+or put whatever port you want)
+VITE_URL=http://localhost:8000
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+# Environment Mode ("development" or "production")
+VITE_ENV=development
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+# Google OAuth Client ID (Get this from Google Cloud Console)
+VITE_GOOGLE_CLIENT_ID=your_google_client_id_here
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+# Optional: Maintenance Mode Toggle (true/false)
+VITE_MAINTENANCE_MODE=false
+```
 
-## Learn More
+---
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## 🚀 Getting Started
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### Prerequisites
 
-### Code Splitting
+- **Node.js** (v18 or higher)
+- **npm** or **yarn**
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Installation
 
-### Analyzing the Bundle Size
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+2. Start the development server:
+   ```bash
+   npm run dev
+   ```
 
-### Making a Progressive Web App
+3. Build for production:
+   ```bash
+   npm run build
+   ```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+---
 
-### Advanced Configuration
+## 🗂️ Project Structure
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+```text
+src/
+├── auth_pages/      # Authentication views (Login, SignUp, OTP, SetPassword)
+├── component/       # Reusable UI components (ChatWindow, MessageBox, Navbar, etc.)
+├── context/         # React Context API state management (Users, Messages, Friends)
+├── pages/           # Main page layouts (ChatRoom, ErrorPage, etc.)
+├── server/          # Socket.IO client setup singleton
+└── utils/           # Utilities (Axios config, Token helpers, Date formatters)
+```
 
-### Deployment
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## 🧠 Key Design Decisions
 
-### `npm run build` fails to minify
+### Resilience Against Server Sleep (Render Free Tier)
+To combat cold starts on free hosting, we implemented:
+- **Global Status Store:** `backendStatus.js` holds a module-level status (`online | sleeping | offline | error500`) outside the React lifecycle, ensuring it survives Strict-Mode remounts.
+- **`StatusGate` Component:** Wraps the entire app and polls `/api/auth/ping` every few seconds while in an error state. Once the backend wakes up, it automatically restores the user's view without requiring a page reload.
+- **Seamless Login Retries:** If a user attempts to log in while the server is asleep, the `Login.jsx` component saves credentials and retries automatically upon server recovery.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+### Secure Token Management
+- Access tokens are proactively refreshed 2 minutes before expiry.
+- Axios response interceptors catch `401 Unauthorized` errors, automatically fetch a new token, and retry the failed request transparently.

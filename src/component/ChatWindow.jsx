@@ -14,6 +14,8 @@ const ChatWindow = ({ onBack }) => {
   const [isShowingEmoji, setIsShowingEmoji] = useState(false);
   const [images, setImages] = useState([]);
   const [sendError, setSendError] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const isSendingRef = useRef(false); // ref guard to prevent concurrent sends
 
   // ── Save draft for old user; restore draft for new user on switch ──
   useEffect(() => {
@@ -104,8 +106,15 @@ const ChatWindow = ({ onBack }) => {
   
   const SendMessage = useCallback( async (e) => {
     e.preventDefault();
+    // ── Guard: block if already sending (prevents double-click / rapid Enter) ──
+    if (isSendingRef.current) return;
     setSendError('');
     if (images.length === 0 && !inputRef.current?.value.trim()) return;
+
+    // ── Lock ──────────────────────────────────────────────────────────────────
+    isSendingRef.current = true;
+    setIsSending(true);
+
     const formData = new FormData();
     const msg = inputRef.current?.value || '';
     if (msg) formData.append('message', msg);
@@ -120,6 +129,10 @@ const ChatWindow = ({ onBack }) => {
       const msg = err?.response?.data?.error || err?.message || 'Send failed. Please try again.';
       setSendError(msg);
       console.error('Send failed:', err);
+    } finally {
+      // ── Unlock — always runs whether send succeeded or failed ──────────────
+      isSendingRef.current = false;
+      setIsSending(false);
     }
   }, [images, Selecteduser.receiverId, sendMessage, setDraft]);
   
@@ -127,12 +140,13 @@ const ChatWindow = ({ onBack }) => {
    const handleKeyDown = (e) => {
      if (e.key === "Enter" && !e.shiftKey) {
        e.preventDefault();
-       SendMessage(e);  // your actual handler, not the API fn
+       // isSendingRef check is already inside SendMessage — no extra guard needed
+       SendMessage(e);
      }
    };
    document.addEventListener("keydown", handleKeyDown);
-   return () => document.removeEventListener("keydown", handleKeyDown);  // cleanup
- }, [SendMessage]);  // re-bind if SendMessage identity changes
+   return () => document.removeEventListener("keydown", handleKeyDown);
+ }, [SendMessage]);
  
   const iconBtn = 'inline-flex items-center justify-center rounded-full h-9 w-9 transition-all duration-200 text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 focus:outline-none flex-shrink-0';
 
@@ -212,11 +226,45 @@ const ChatWindow = ({ onBack }) => {
               </svg>
             </button>
 
-            <button type="submit"
-              className="inline-flex items-center justify-center rounded-full h-9 w-9 bg-indigo-500 hover:bg-indigo-600 active:scale-95 transition-all text-white shadow-md focus:outline-none flex-shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 rotate-90">
-                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-              </svg>
+            {/* ── Send button — shows spinner while sending, arrow when idle ── */}
+            <button
+              type="submit"
+              disabled={isSending}
+              title={isSending ? 'Sending…' : 'Send'}
+              className={
+                `inline-flex items-center justify-center rounded-full h-9 w-9 transition-all duration-200 text-white shadow-md focus:outline-none flex-shrink-0 
+                ${
+                  isSending
+                    ? 'bg-indigo-400 cursor-not-allowed scale-95'
+                    : 'bg-indigo-500 hover:bg-indigo-600 active:scale-95'
+                }`
+              }
+            >
+              {isSending ? (
+                /* ── Pulsing-ring spinner ── */
+                <svg
+                  className="h-5 w-5 animate-spin"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12" cy="12" r="10"
+                    stroke="currentColor" strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"
+                  />
+                </svg>
+              ) : (
+                /* ── Arrow (send) icon ── */
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 rotate-90">
+                  <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                </svg>
+              )}
             </button>
 
           </div>
