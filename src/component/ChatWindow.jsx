@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import '../App.css';
 import ProfileHeader from './ProfileHeader';
 import MessageBox from './MessageBox';
@@ -79,8 +79,10 @@ const ChatWindow = ({ onBack }) => {
     e.target.value = '';
   };
 
+  
+  
   const removeImage = (i) => setImages(p => p.filter((_, idx) => idx !== i));
-
+  
   useEffect(() => {
     const handlePaste = (e) => {
       const allowed = ['image/', 'video/'];
@@ -99,8 +101,8 @@ const ChatWindow = ({ onBack }) => {
     window.addEventListener('paste', handlePaste);
     return () => window.removeEventListener('paste', handlePaste);
   }, []);
-
-  const SendMessage = async (e) => {
+  
+  const SendMessage = useCallback( async (e) => {
     e.preventDefault();
     setSendError('');
     if (images.length === 0 && !inputRef.current?.value.trim()) return;
@@ -119,8 +121,19 @@ const ChatWindow = ({ onBack }) => {
       setSendError(msg);
       console.error('Send failed:', err);
     }
-  };
-
+  }, [images, Selecteduser.receiverId, sendMessage, setDraft]);
+  
+  useEffect(() => {
+   const handleKeyDown = (e) => {
+     if (e.key === "Enter" && !e.shiftKey) {
+       e.preventDefault();
+       SendMessage(e);  // your actual handler, not the API fn
+     }
+   };
+   document.addEventListener("keydown", handleKeyDown);
+   return () => document.removeEventListener("keydown", handleKeyDown);  // cleanup
+ }, [SendMessage]);  // re-bind if SendMessage identity changes
+ 
   const iconBtn = 'inline-flex items-center justify-center rounded-full h-9 w-9 transition-all duration-200 text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 focus:outline-none flex-shrink-0';
 
   return (
