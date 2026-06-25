@@ -48,8 +48,10 @@ export const MessageState = (props) => {
   useEffect(() => {
     if (!user?.id) return;
     const doJoin = () => { socket.emit("joinRoom"); joinedRef.current = true; };
+    console.info("msg state- useeffect- do join")
     if (!socket.connected) {
-      socket.connect();
+      socket.auth = { token: localStorage.getItem("token") };
+      console.info("coekct connect",socket.connect());
       socket.once("connect", doJoin);
     } else if (!joinedRef.current) {
       doJoin();

@@ -68,7 +68,7 @@ export const UserState = (props) => {
   //login auth
   const login = async(email, password, deviceInfo)=>{
    try{
-    const response = await api.post('/api/auth/loginuser', { email, password });
+    const response = await api.post('/api/auth/loginuser', { email, password, ...deviceInfo });
     console.log("response: ", response.data);
     
     
