@@ -12,6 +12,10 @@ export default defineConfig({
     headers: {
       "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
       "Cross-Origin-Embedder-Policy": "unsafe-none", // ✅ changed from require-corp
-    }
+    },
+    esbuild: {
+    // This drops console.log and console.info, but keeps console.error/warn
+    drop: ['console', 'debugger'], 
+  },
   }
 })

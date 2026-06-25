@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import {api} from '../../utils/SetAuthToken';
 import setupAxiosInterceptors from "../../utils/SetupAxiosInterceptors";
 
+
 const throwFriendlyError = (error) => {
   const message = error.response?.data.error || error.response?.data.message || error.message || "Something went wrong";
   const msgText = typeof message === 'object' ? (message.message || "Something went wrong") : message;
@@ -65,9 +66,9 @@ export const UserState = (props) => {
 
 
   //login auth
-  const login = async(email, password)=>{
+  const login = async(email, password, deviceInfo)=>{
    try{
-    const response = await api.post('/api/auth/loginuser', { email, password });
+    const response = await api.post('/api/auth/loginuser', { email, password, ...deviceInfo });
     console.log("response: ", response.data);
     
     
@@ -81,9 +82,9 @@ export const UserState = (props) => {
   }
 
 // login/signup with google
-const googleLogin = async()=>{
+const googleLogin = async(deviceInfo)=>{
   try {
-    const response = await api.post('/api/auth/googlelogin');
+    const response = await api.post('/api/auth/googlelogin', { ...deviceInfo});
     console.log("google login response: ", response.data);
 
     return response.data;
@@ -117,9 +118,9 @@ const googleLogin = async()=>{
       throwFriendlyError(error);
     }
 }
-  const RefreshToken = useCallback(async ()=>{
+  const RefreshToken = useCallback(async (deviceId)=>{
     try {
-      const response = await api.post('/api/auth/token',{}, { withCredentials: true });
+      const response = await api.post('/api/auth/token',{ deviceId: deviceId }, { withCredentials: true });
       console.log("RefreshToken response:", response.data);
       return response.data.token;
       
@@ -134,9 +135,9 @@ const googleLogin = async()=>{
   // any initial requests (like fetchUser in child components) are intercepted correctly.
   setupAxiosInterceptors(navigate, RefreshToken);
 
-  const logout = async ()=>{
+  const logout = async (deviceId)=>{
     try {
-      const response = await api.post('/api/auth/logout', {}, { withCredentials: true });
+      const response = await api.post('/api/auth/logout', { deviceId }, { withCredentials: true });
       console.log("Logout response:", response.data);
       
       return response.data;
@@ -147,9 +148,9 @@ const googleLogin = async()=>{
     }
   }
 
-  const verifyOtp = async(email, otpCode)=>{
+  const verifyOtp = async(email, otpCode, deviceInfo)=>{
     try {
-      const response = await api.post('/api/auth/verify-otp', { email, otpCode });
+      const response = await api.post('/api/auth/verify-otp', { email, otpCode, ...deviceInfo });
       console.log("verifyOtp response:", response.data);
       return response.data;
       

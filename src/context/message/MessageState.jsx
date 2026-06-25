@@ -47,9 +47,11 @@ export const MessageState = (props) => {
   // ── Connect + join room once user.id is known ──────────────────────────────
   useEffect(() => {
     if (!user?.id) return;
-    const doJoin = () => { socket.emit("joinRoom", user.id); joinedRef.current = true; };
+    const doJoin = () => { socket.emit("joinRoom"); joinedRef.current = true; };
+    console.info("msg state- useeffect- do join")
     if (!socket.connected) {
-      socket.connect();
+      socket.auth = { token: localStorage.getItem("token") };
+      console.info("coekct connect",socket.connect());
       socket.once("connect", doJoin);
     } else if (!joinedRef.current) {
       doJoin();
@@ -59,7 +61,7 @@ export const MessageState = (props) => {
 
   // ── Re-join after reconnect (Render wake-up) ───────────────────────────────
   useEffect(() => {
-    const onReconnect = () => { if (user?.id) socket.emit("joinRoom", user.id); };
+    const onReconnect = () => { if (user?.id) socket.emit("joinRoom"); };
     socket.on("connect", onReconnect);
     return () => socket.off("connect", onReconnect);
   }, [user?.id]);
@@ -207,7 +209,7 @@ console.info("mesages change or not : ", messages);
     if (!senderId) return;
     try {
       await api.put(`/api/messages/markasread/${senderId}`);
-      socket.emit("markRead", { senderId, receiverId: user?.id });
+      socket.emit("markRead", { senderId });
     } catch (e) { /* silent */ }
   };
 

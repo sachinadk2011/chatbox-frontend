@@ -29,11 +29,14 @@ import { getTokenExpiry } from './utils/tokenUtils';
 import axios from 'axios';
 import { requestNotificationPermission} from './utils/notificationUtils';
 import NotificationPrompt from './component/NotificationPrompt';
+import {getDeviceId, getDeviceInfo } from './utils/userDeviceInfo';
 
 const EMPTY_USER = {
   receiverId: null, receiverName: '', senderId: null, senderName: '',
   lastActive: null, onlineStatus: false, profile_url: null,
 };
+
+console.info("app js: ", getDeviceInfo());
 
 function ProtectedRoute({ element }) {
   const { user } = useContext(UserContext);
@@ -259,7 +262,7 @@ useEffect(() => {
       const msUntilRefresh = expiry - Date.now() - 2 * 60 * 1000;
 
       if (msUntilRefresh <= 0) {
-        RefreshToken()
+        RefreshToken(getDeviceId())
           .then(newToken => {
             localStorage.setItem('token', newToken);
             SetAuthToken(newToken);
@@ -280,7 +283,7 @@ useEffect(() => {
       console.log(`Token refreshes in ${Math.round(msUntilRefresh / 1000 / 60)} minutes`);
       return setTimeout(async () => {
         try {
-          const newToken = await RefreshToken();
+          const newToken = await RefreshToken(getDeviceId());
           localStorage.setItem('token', newToken);
           SetAuthToken(newToken);
           schedule();

@@ -3,6 +3,7 @@ import UserContext from '../context/users/UserContext';
 import { useNavigate } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import SetAuthToken from '../utils/SetAuthToken';
+import { getDeviceInfo } from "../utils/userDeviceInfo";
 
 const SignUp = () => {
   const { signup, getUser, setUser, googleLogin } = useContext(UserContext);
@@ -12,6 +13,8 @@ const SignUp = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const deviceInfo = getDeviceInfo();
+
 
   const ochange = (e) => {
     setError("");
@@ -43,7 +46,7 @@ const SignUp = () => {
     const { credential: googleCred } = credentialResponse;
     try {
       SetAuthToken(googleCred);
-      const json = await googleLogin();
+      const json = await googleLogin(deviceInfo);
       localStorage.setItem("token", json.token);
       SetAuthToken(json.token);
       const userdata = await getUser();
