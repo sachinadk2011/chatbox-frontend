@@ -8,13 +8,13 @@ import {
   isDevEnvironment
 } from '../utils/backendStatus';
 import axios from 'axios';
+import { getDeviceInfo } from "../utils/userDeviceInfo";
 
 const PING_URL = `${import.meta.env.VITE_URL || 'http://localhost:8000'}/api/auth/ping`;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
-
 /** Returns true if the error is a network-level failure (server sleeping / offline) */
 function isNetworkError(err) {
   return !err?.response; // no HTTP response → pure network error
@@ -23,6 +23,7 @@ function isNetworkError(err) {
 const Login = () => {
   const navigate = useNavigate();
   const { login, getUser, setUser, googleLogin } = useContext(UserContext);
+  const deviceInfo = getDeviceInfo();
 
   const [credential, setCredential] = useState({ email: '', password: '' });
   const [showPass, setShowPass]     = useState(false);
@@ -41,7 +42,7 @@ const Login = () => {
 
   // ── Core: do the actual login / redirect after server recovers ────────────
   const doLogin = useCallback(async (email, password) => {
-    const json = await login(email, password);
+    const json = await login(email, password, deviceInfo);
     if (!json.success) throw new Error(json.error || 'Login failed');
     localStorage.setItem('token', json.token);
     SetAuthToken(json.token);
@@ -53,7 +54,7 @@ const Login = () => {
 
   const doGoogleLogin = useCallback(async (googleCred) => {
     SetAuthToken(googleCred);
-    const json = await googleLogin();
+    const json = await googleLogin(deviceInfo);
     localStorage.setItem('token', json.token);
     SetAuthToken(json.token);
     const userdata = await getUser();

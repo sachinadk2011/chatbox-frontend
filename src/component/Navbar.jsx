@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import UserContext from '../context/users/UserContext';
 import MessageContext from '../context/message/MessageContext';
+import { getDeviceId } from '../utils/userDeviceInfo';
 
 /**
  * Navbar
@@ -24,7 +25,7 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      await logout();
+      await logout(getDeviceId());
       setUser({ name: '', email: '', id: '', onlineStatus: false, lastActive: null, profile_Url: null, public_id: null });
       localStorage.removeItem('token');
       localStorage.removeItem('user');

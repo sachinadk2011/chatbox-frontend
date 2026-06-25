@@ -2,11 +2,13 @@ import { useContext, useState } from 'react';
 import UserContext from '../context/users/UserContext';
 import { useNavigate } from "react-router-dom";
 import SetAuthToken from '../utils/SetAuthToken';
+import { getDeviceInfo } from "../utils/userDeviceInfo";
 
 const VerificationCode = () => {
   const { verifyOtp, getUser, setUser, resendOtp } = useContext(UserContext);
   let navigate = useNavigate();
   const { email, from } = JSON.parse(localStorage.getItem("tempData")) || { email: "", from: "" };
+  const deviceInfo = getDeviceInfo();
 
   const [otpCode, setOtpCode] = useState(Array(6).fill(""));
   const [loading, setLoading] = useState(false);
@@ -51,7 +53,8 @@ const VerificationCode = () => {
     if (code.length < 6) { setError("Please enter all 6 digits."); return; }
     setLoading(true); setError("");
     try {
-      const json = await verifyOtp(email, code);
+
+      const json = await verifyOtp(email, code, deviceInfo);
       if (from === "signup") {
         localStorage.setItem("token", json.token);
         SetAuthToken(json.token);

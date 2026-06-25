@@ -1,6 +1,7 @@
 import axios from "axios";
 import SetAuthToken, { api } from "./SetAuthToken";
 import { markBackendOffline, markBackend500 } from "./backendStatus";
+import { getDeviceId } from "./userDeviceInfo";
 
 let isSetup = false; // module-level flag — persists across renders
 
@@ -44,7 +45,7 @@ const setupAxiosInterceptors = (navigate, RefreshToken) => {
         if (!originalRequest._retry) {
           originalRequest._retry = true;
           try {
-            const newToken = await RefreshToken();
+            const newToken = await RefreshToken(getDeviceId());
             if (newToken) {
               localStorage.setItem("token", newToken);
               SetAuthToken(newToken);
