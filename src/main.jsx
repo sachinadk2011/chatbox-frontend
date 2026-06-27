@@ -5,6 +5,18 @@ import App from './App';
 
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
+// Disable debug logs in production
+const noop = () => {};
+
+if (import.meta.env.PROD) {
+  
+  console.log = noop;
+  console.info = noop;
+  console.debug = noop;
+  console.warn = noop;
+  
+}
+
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
