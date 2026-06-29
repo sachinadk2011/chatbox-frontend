@@ -220,7 +220,12 @@ useEffect(() => {
         // ✅ Only redirect if on a page that has nothing to show logged-in users
       const currentPath = window.location.pathname;
       const isAuthPage = [...AUTH_PAGES, '/'].includes(currentPath);
-      if (isAuthPage) navigate("/chats");
+      if (isAuthPage) {
+        // Respect ?redirect= param (e.g. from portfolio ChatWaves button)
+        const params = new URLSearchParams(window.location.search);
+        const redirectTo = params.get('redirect') || '/chats';
+        navigate(redirectTo);
+      }
       // If already at /chats/v1/u/abc123 or /friends/list — stay exactly there
       }
     } catch (error) {

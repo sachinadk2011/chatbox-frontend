@@ -208,8 +208,23 @@ const googleLogin = async(deviceInfo)=>{
     }
   }
 
+  const fcm_token = async(fcmToken, deviceId) => {
+    try{
+      const response = await api.post('/api/auth/save-fcm-token', { fcmToken, deviceId});
+      console.info("fcm token response: ", response.data);
+      if (!response.data.success) {
+        throw new Error(response.data.error);
+      }
+      console.info("fcm token response: ", response.data);
+      
+    } catch (error) {
+      console.error("Error saving FCM token:", error);
+      throwFriendlyError(error);
+    }
+  }
+
   const value = useMemo( ()=>({
-login, signup, getUser, user, setUser, googleLogin, RefreshToken, logout, verifyOtp, resendOtp, forgetPassword, setPassword, CheckPasswordResetRequest 
+login, signup, getUser, user, setUser, googleLogin, RefreshToken, logout, verifyOtp, resendOtp, forgetPassword, setPassword, CheckPasswordResetRequest, fcm_token
   }), [user]);
 
   return (
