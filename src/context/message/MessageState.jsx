@@ -102,14 +102,14 @@ export const MessageState = (props) => {
     const isIncoming = senderId && senderId !== myId;
     const isViewingThisChat = selectedUserRef.current?.receiverId?.toString() === senderId;
     
-    if (isIncoming && !isViewingThisChat){
+    /* if (isIncoming && !isViewingThisChat){
       showChatNotification({
         senderName: msg.sender?.name || "Someone",
         message: msg.message,
         types: msg.types,
         senderId
       });
-    }
+    } */
   };
     socket.on("receiveMessage", handler);
     return () => socket.off("receiveMessage", handler);
@@ -206,18 +206,23 @@ console.info("mesages change or not : ", messages);
 
   // ── Mark as read ───────────────────────────────────────────────────────────
   const markAsRead = async (senderId) => {
+    console.info("markAsRead called for senderId:", senderId);
     if (!senderId) return;
     try {
-      await api.put(`/api/messages/markasread/${senderId}`);
+      const response = await api.put(`/api/messages/markasread/${senderId}`);
       socket.emit("markRead", { senderId });
-    } catch (e) { /* silent */ }
+      console.info(`Marked messages as read for senderId: ${senderId}. Server response:`, response.data);
+    } catch (e) { 
+      console.error("Error marking messages as read:", e);
+      
+     }
   };
 
 
   const  value = useMemo(() =>({
 messages, setMessages,
       Selecteduser, setSelectedUser: setSelectedUserWithRef,
-      fetchMessages, fetchConversation, sendMessage, markAsRead,
+      fetchMessages, fetchConversation, sendMessage, markAsRead, selectedUserRef,
       drafts, setDraft, totalUnread
   }), [messages, Selecteduser, drafts]);
   return (

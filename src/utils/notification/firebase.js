@@ -61,4 +61,13 @@ const registration = await navigator.serviceWorker.ready;
     
     return { token: null, error: error.message || "unknown_error" };
   }
-}
+};
+
+// ── NEW: foreground listener — fires ONLY when tab is open and focused ──
+// This replaces the socket-based showChatNotification entirely.
+export const listenForegroundMessages = (onMessageCallback) => {
+  return onMessage(messaging, (payload) => {
+    console.info("Foreground FCM message received:", payload);
+    onMessageCallback(payload);
+  });
+};

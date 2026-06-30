@@ -14,29 +14,56 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Background message handler
-messaging.onBackgroundMessage((payload) => {
+// ── Background message handler ──
+// Payload is data-only now — accumulate messages by reading the
+// previous notification's stored `data.messages` array (survives SW restarts
+// as long as the notification is still visible/un-clicked).
+messaging.onBackgroundMessage(async (payload) => {
   console.log("Background message received:", payload);
 
-  const { title, body } = payload.notification || {};
-  const { senderId } = payload.data || {};
+  const { senderId, senderName, preview } = payload.data || {};
+  if (!senderId) return;
 
-  self.registration.showNotification(title || "New Message", {
-    body: body || "You have a new message",
+  const tag = `chat-${senderId}`;
+
+  // Look for an existing notification with the same tag
+  const existing = await self.registration.getNotifications({ tag });
+  let messages = [];
+  if (existing.length > 0 && Array.isArray(existing[0].data?.messages)) {
+    messages = existing[0].data.messages;
+  }
+
+  messages.push(preview || "New message");
+
+  const count = messages.length;
+  const shown = messages.slice(-4);
+  const overflow = count - shown.length;
+  const body = [
+    overflow > 0 ? `↑ ${overflow} earlier message${overflow > 1 ? 's' : ''}` : null,
+    ...shown,
+  ].filter(Boolean).join('\n');
+
+  const title = count > 1
+    ? `${senderName || 'Someone'} · ${count} new messages`
+    : (senderName || 'Someone');
+
+  self.registration.showNotification(title, {
+    body,
     icon: "https://res.cloudinary.com/df4pswtdc/image/upload/w_100,h_100,c_fit/chat_waves%20logo/vyxmokk7tiorkopsxlei.png",
     badge: "https://res.cloudinary.com/df4pswtdc/image/upload/w_100,h_100,c_fit/chat_waves%20logo/vyxmokk7tiorkopsxlei.png",
-    tag: `chat-${senderId}`,        // groups notifications per sender
+    tag,
     renotify: true,
-    data: { senderId },
+    data: { senderId, messages }, // persisted for the NEXT push event
   });
 });
 
-// Click on notification → open/focus the chat tab
+// Click on notification → open/focus the chat tab, clear stacked messages
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const senderId = event.notification.data?.senderId;
+  console.info("Notification click for senderId:", senderId);
   const url = senderId
-    ? `${self.location.origin}/chat/${senderId}`
+    ? `${self.location.origin}/chats/v1/u/${senderId}`
     : self.location.origin;
 
   event.waitUntil(
@@ -45,7 +72,7 @@ self.addEventListener("notificationclick", (event) => {
       .then((clientList) => {
         for (const client of clientList) {
           if (client.url.includes(self.location.origin) && "focus" in client) {
-            client.navigate(url);
+            client.postMessage({ type: "navigateToChat", senderId });
             return client.focus();
           }
         }

@@ -85,6 +85,44 @@ next notification from this person starts fresh from 1 again.
 };
 
      //setTimeout(() => notification.close(), 6000);
-    
 
+
+// ... keep everything as-is, but add this new exported function:
+
+export const showChatNotificationFromFCM = (payload) => {
+  const { senderId, senderName = "Someone", preview = "" } = payload.data || {};
+  if (!senderId) return;
+  if (!('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
+
+  // Foreground: accumulate using the in-memory Map (page is alive, fine to use this)
+  const msg = pendingMsgMap.get(senderId) || [];
+  msg.push(preview);
+  pendingMsgMap.set(senderId, msg);
+
+  const count = msg.length;
+  const title = count > 1 ? `${senderName} · ${count} new messages` : senderName;
+  const shown = msg.slice(-4);
+  const overflow = count - shown.length;
+  const body = [
+    overflow > 0 ? `↑ ${overflow} earlier message${overflow > 1 ? 's' : ''}` : null,
+    ...shown,
+  ].filter(Boolean).join('\n');
+
+  const notification = new Notification(title, {
+    body,
+    icon: '/icon/android-chrome-192x192.png',
+    badge: '/icon/favicon-32x32.png',
+    tag: `chat-${senderId}`,
+    renotify: true,
+  });
+
+  notification.onclick = () => {
+    window.focus();
+    notification.close();
+    pendingMsgMap.delete(senderId);
+    window.dispatchEvent(
+      new CustomEvent('navigateToChat', { detail: { senderId } }));
+  };
+};
 
