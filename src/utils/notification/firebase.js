@@ -23,6 +23,7 @@ const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);
 
 console.log("Messaging instance:", messaging);
+
 export const GetfcmToken = async () => {
     try {
         await navigator.serviceWorker.register("/firebase-messaging-sw.js");
@@ -34,22 +35,30 @@ const registration = await navigator.serviceWorker.ready;
 
         );
         const permission = await requestNotificationPermission();
-        if (permission === "granted") {
+        if (permission !== "granted") return { token: null, error: "permission_denied" };
+        
             const currentToken = await getToken(messaging, { vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
                 serviceWorkerRegistration: registration,
             });
-          
-            return currentToken;
-        } else {
-            console.log("Notification permission denied");
-            return null;
-        }
+            if (!currentToken) {
+                console.warn("No registration token available. Request permission to generate one.");
+                return { token: null, error: "no_token" };
+            }
+          console.info("currentToken", currentToken);
+            return { token: currentToken, error: null };
+       
     } catch (error) {
-        console.error("Error requesting notification permission or getting token:", error);
-        console.error("Full error:", error);
-console.error("Name:", error.name);
-console.error("Message:", error.message);
-console.error("Stack:", error.stack);
-        return null;
-    }
+       // Brave (and some hardened browsers) block Google's push service entirely
+    if (error.name === "AbortError" || error.message?.includes("push service")) {
+      console.warn(
+        "Push notifications unavailable: this browser blocks Google's push service " +
+        "(common in Brave). In-app/browser notifications will still work while the tab is open."
+      );
+      return { token: null, error: "push_service_blocked" };
+    } 
+      console.error("Error getting FCM token:", error);
+
+    
+    return { token: null, error: error.message || "unknown_error" };
+  }
 }

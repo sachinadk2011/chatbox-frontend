@@ -3,13 +3,14 @@ import { requestNotificationPermission, getNotificationStatus } from '../utils/n
 import { GetfcmToken } from '../utils/notification/firebase';
 import UserContext from '../context/users/UserContext';
 import { getDeviceId } from "../utils/userDeviceInfo";
-
+import PushBlockedModal from './PushBlockedModal';
 
 
 const NotificationPrompt = () => {
   const [status, setStatus] = useState('default');
   const [dismissed, setDismissed] = useState(false);
   const { fcm_token } = useContext(UserContext);
+  const [showBlockedModal, setShowBlockedModal] = useState(false);
 
   useEffect(() => {
     setStatus(getNotificationStatus());
@@ -21,19 +22,27 @@ const NotificationPrompt = () => {
 
   const handleEnable = async () => {
     const result = await requestNotificationPermission();
+
     console.info("Notification permission result: ", result);
     setStatus(result);
+
     console.info("Notification permission status after request: ", getNotificationStatus());
     
     if (result !== 'default') {
       if (result === 'granted') {
       try{
-        const fcmToken = await GetfcmToken();
+        const { token: fcmToken, error } = await GetfcmToken();
         const deviceId = getDeviceId();
+
         console.info("FCM Token obtained: ", fcmToken);
         if (!fcmToken) {
         // Push service registration failed (common in dev/Edge)
-        console.warn('FCM token is null — push service may be unavailable in this browser/environment');
+        console.warn('FCM token is null — push service may be unavailable in this browser/environment', error);
+        if (error === 'push_service_blocked') {
+            setShowBlockedModal(true); // show instructions
+            console.info("show bloacked modal: in ", showBlockedModal);
+          }
+          console.info("show bloacked modal: ", showBlockedModal);
         setDismissed(true);
         return;
       }
@@ -53,10 +62,15 @@ const NotificationPrompt = () => {
     localStorage.setItem('notif-prompt-dismissed', '1');
   };
 
-  // Only show the banner if permission hasn't been decided yet
-  if (status !== 'default' || dismissed) return null;
-
+  console.info("outside : ", "status: ", status, " | dismissed: ", dismissed, " | showBlockedModal: ", showBlockedModal);
+  
   return (
+     <>
+      {showBlockedModal && (
+        <PushBlockedModal onClose={() => setShowBlockedModal(false)} />
+      )}
+
+      {status === 'default' && !dismissed && (
     <div className="fixed bottom-20 md:bottom-4 left-1/2 -translate-x-1/2 z-50
                     flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl
                     bg-white border border-indigo-100 max-w-sm w-[calc(100%-2rem)]">
@@ -81,6 +95,8 @@ const NotificationPrompt = () => {
         </button>
       </div>
     </div>
+    )}
+    </>
   );
 };
 
