@@ -212,6 +212,19 @@ console.info("mesages change or not : ", messages);
       const response = await api.put(`/api/messages/markasread/${senderId}`);
       socket.emit("markRead", { senderId });
       console.info(`Marked messages as read for senderId: ${senderId}. Server response:`, response.data);
+       // ✅ Update local state immediately so sidebar bold/unread count clears right away
+    setMessages(prev => prev.map(chat =>
+      chat.otherUserId === senderId?.toString()
+        ? {
+            ...chat,
+            messages: chat.messages.map(m =>
+              m.sender?._id?.toString() === senderId?.toString() && m.status !== 'read'
+                ? { ...m, status: 'read' }
+                : m
+            )
+          }
+        : chat
+    ));
     } catch (e) { 
       console.error("Error marking messages as read:", e);
       

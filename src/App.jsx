@@ -156,7 +156,7 @@ function StatusGate({ children }) {
 function AppContent() {
   const navigate = useNavigate();
   const { getUser, setUser, user, RefreshToken } = useContext(UserContext);
-  const { selectedUserRef , setSelectedUser, totalUnread, markAsRead  } = useContext(MessageContext);
+  const { selectedUserRef ,Selecteduser, setSelectedUser, totalUnread, markAsRead  } = useContext(MessageContext);
   const location = useLocation();
   const [isOnline, setIsOnline] = useState(navigator.onLine); // eslint-disable-line no-unused-vars
 
@@ -230,7 +230,7 @@ useEffect(() => {
     navigate(`/chats/v1/u/${e.detail.senderId}`);}
   window.addEventListener('navigateToChat', handler);
   return () => window.removeEventListener('navigateToChat', handler);
-}, [navigate]);
+}, [navigate, Selecteduser?.receiverId]);
 
   const fetchUser = useCallback(async () => {
     const token = localStorage.getItem('token');
