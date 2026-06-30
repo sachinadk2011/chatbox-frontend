@@ -1,5 +1,5 @@
 import { useState, useContext, useEffect, useRef, useCallback } from 'react';
-import { useNavigate, NavLink } from "react-router";
+import { useNavigate, NavLink, useLocation } from "react-router";
 import UserContext from '../context/users/UserContext';
 import SetAuthToken from '../utils/SetAuthToken';
 import { GoogleLogin } from '@react-oauth/google';
@@ -22,8 +22,12 @@ function isNetworkError(err) {
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, getUser, setUser, googleLogin } = useContext(UserContext);
   const deviceInfo = getDeviceInfo();
+
+  // Read optional ?redirect= search param (e.g. /friends/add-friend)
+  const redirectTo = new URLSearchParams(location.search).get('redirect') || '/chats';
 
   const [credential, setCredential] = useState({ email: '', password: '' });
   const [showPass, setShowPass]     = useState(false);
@@ -49,8 +53,8 @@ const Login = () => {
     const userdata = await getUser();
     localStorage.setItem('user', JSON.stringify(userdata.user));
     setUser(userdata.user);
-    navigate('/chats');
-  }, [login, getUser, setUser, navigate]);
+    navigate(redirectTo);
+  }, [login, getUser, setUser, navigate, redirectTo]);
 
   const doGoogleLogin = useCallback(async (googleCred) => {
     SetAuthToken(googleCred);
@@ -60,8 +64,8 @@ const Login = () => {
     const userdata = await getUser();
     localStorage.setItem('user', JSON.stringify(userdata.user));
     setUser(userdata.user);
-    navigate('/chats');
-  }, [googleLogin, getUser, setUser, navigate]);
+    navigate(redirectTo);
+  }, [googleLogin, getUser, setUser, navigate, redirectTo]);
 
   // ── Cancel any pending retry (cleanup) ────────────────────────────────────
   const cancelPending = useCallback(() => {

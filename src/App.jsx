@@ -30,6 +30,8 @@ import axios from 'axios';
 import { requestNotificationPermission} from './utils/notificationUtils';
 import NotificationPrompt from './component/NotificationPrompt';
 import {getDeviceId, getDeviceInfo } from './utils/userDeviceInfo';
+import { listenForegroundMessages } from './utils/notification/firebase';
+import { showChatNotificationFromFCM } from './utils/notificationUtils';
 
 const EMPTY_USER = {
   receiverId: null, receiverName: '', senderId: null, senderName: '',
@@ -154,7 +156,7 @@ function StatusGate({ children }) {
 function AppContent() {
   const navigate = useNavigate();
   const { getUser, setUser, user, RefreshToken } = useContext(UserContext);
-  const { setSelectedUser, totalUnread, markAsRead  } = useContext(MessageContext);
+  const { selectedUserRef ,Selecteduser, setSelectedUser, totalUnread, markAsRead  } = useContext(MessageContext);
   const location = useLocation();
   const [isOnline, setIsOnline] = useState(navigator.onLine); // eslint-disable-line no-unused-vars
 
@@ -191,6 +193,35 @@ useEffect(() => {
     : 'Chat Waves - Real-time Chat App';
 }, [totalUnread]);
 
+// inside AppContent, alongside your other useEffects:
+useEffect(() => {
+  const unsubscribe = listenForegroundMessages((payload) => {
+    const senderId = payload.data?.senderId;
+    console.info("app.js conetent foreground msg : ", senderId, " | payload: ", payload);
+    // Don't show if user is already viewing this chat
+    if (selectedUserRef?.current?.receiverId?.toString() === senderId) return;
+    showChatNotificationFromFCM(payload);
+  });
+  return () => unsubscribe?.();
+}, [selectedUserRef ]);
+
+// ── Bridge service worker postMessage → same custom event the rest of the app listens for ──
+useEffect(() => {
+  if (!('serviceWorker' in navigator)) return;
+
+  const handler = (event) => {
+    console.info('Message from service worker:', event.data);
+    if (event.data?.type === 'navigateToChat' && event.data?.senderId) {
+      window.dispatchEvent(
+        new CustomEvent('navigateToChat', { detail: { senderId: event.data.senderId } })
+      );
+    }
+  };
+
+  navigator.serviceWorker.addEventListener('message', handler);
+  return () => navigator.serviceWorker.removeEventListener('message', handler);
+}, []);
+
 // ── Handle notification click → navigate to that chat (no page reload) ──
 useEffect(() => {
   const handler = (e) => {
@@ -199,7 +230,7 @@ useEffect(() => {
     navigate(`/chats/v1/u/${e.detail.senderId}`);}
   window.addEventListener('navigateToChat', handler);
   return () => window.removeEventListener('navigateToChat', handler);
-}, [navigate]);
+}, [navigate, Selecteduser?.receiverId]);
 
   const fetchUser = useCallback(async () => {
     const token = localStorage.getItem('token');
@@ -220,7 +251,12 @@ useEffect(() => {
         // ✅ Only redirect if on a page that has nothing to show logged-in users
       const currentPath = window.location.pathname;
       const isAuthPage = [...AUTH_PAGES, '/'].includes(currentPath);
-      if (isAuthPage) navigate("/chats");
+      if (isAuthPage) {
+        // Respect ?redirect= param (e.g. from portfolio ChatWaves button)
+        const params = new URLSearchParams(window.location.search);
+        const redirectTo = params.get('redirect') || '/chats';
+        navigate(redirectTo);
+      }
       // If already at /chats/v1/u/abc123 or /friends/list — stay exactly there
       }
     } catch (error) {
