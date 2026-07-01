@@ -1,10 +1,10 @@
 import React, { useContext, useEffect, useState, useRef, useCallback } from 'react';
-import UserContext from '../context/users/UserContext';
+import UserContext from '../../context/users/UserContext';
 import { ReceivedMsg } from './ReceivedMsg';
 import { SendMsg } from './SendMsg';
-import MessageContext from '../context/message/MessageContext';
-import socket from '../server/socket';
-import {getDateLabel, getTimeLabel} from '../utils/dateUtils';
+import MessageContext from '../../context/message/MessageContext';
+import socket from '../../services/socket';
+import {getDateLabel, getTimeLabel} from '../../utils/helpers/dateUtils';
 
 const MessageBox = () => {
   const { messages, Selecteduser, markAsRead, fetchConversation } = useContext(MessageContext);

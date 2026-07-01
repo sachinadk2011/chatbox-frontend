@@ -1,14 +1,14 @@
 import { useState, useContext, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, NavLink, useLocation } from "react-router";
-import UserContext from '../context/users/UserContext';
-import SetAuthToken from '../utils/SetAuthToken';
+import UserContext from '../../context/users/UserContext';
+import SetAuthToken from '../../utils/auth/SetAuthToken';
 import { GoogleLogin } from '@react-oauth/google';
 import {
   subscribeBackendStatus, getBackendStatus,
   isDevEnvironment
-} from '../utils/backendStatus';
+} from '../../utils/helpers/backendStatus';
 import axios from 'axios';
-import { getDeviceInfo } from "../utils/userDeviceInfo";
+import { getDeviceInfo } from "../../utils/helpers/userDeviceInfo";
 
 const PING_URL = `${import.meta.env.VITE_URL || 'http://localhost:8000'}/api/auth/ping`;
 

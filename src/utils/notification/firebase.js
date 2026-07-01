@@ -2,7 +2,7 @@
 import { initializeApp } from "firebase/app";
 
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
-import { requestNotificationPermission } from "../notificationUtils";
+import { requestNotificationPermission } from "./notificationUtils";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 

@@ -1,9 +1,9 @@
 import React, { useContext } from 'react';
 import { useNavigate, useLocation } from "react-router";
-import Header from './Header';
-import SidebarList from './SidebarList';
+import Header from '../layout/Header';
+import SidebarList from '../layout/SidebarList';
 import ChatWindow from './ChatWindow';
-import MessageContext from '../context/message/MessageContext';
+import MessageContext from '../../context/message/MessageContext';
 
 /**
  * ChatLayout — shared by:

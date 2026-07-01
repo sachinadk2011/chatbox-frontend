@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
-import { subscribeBackendStatus, markBackendOnline } from '../utils/backendStatus';
-import { api } from '../utils/SetAuthToken';
+import { subscribeBackendStatus, markBackendOnline } from '../../utils/helpers/backendStatus';
+import { api } from '../../utils/auth/SetAuthToken';
 
 /**
  * ServerWakingBanner

@@ -2,7 +2,7 @@ import React, {useEffect, useContext}  from 'react';
 import {useParams } from 'react-router-dom';
 import MessageContext from "../../context/message/MessageContext";
 import FriendsContext from '../../context/friends/FriendsContext';
-import ChatLayout from '../ChatLayout';
+import ChatLayout from '../chat/ChatLayout';
 
 /**
  * /friends/list route inner component.

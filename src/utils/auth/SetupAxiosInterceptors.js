@@ -1,7 +1,7 @@
 import axios from "axios";
 import SetAuthToken, { api } from "./SetAuthToken";
-import { markBackendOffline, markBackend500 } from "./backendStatus";
-import { getDeviceId } from "./userDeviceInfo";
+import { markBackendOffline, markBackend500 } from "../helpers/backendStatus";
+import { getDeviceId } from "../helpers/userDeviceInfo";
 
 let isSetup = false; // module-level flag — persists across renders
 

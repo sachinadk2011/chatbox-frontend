@@ -1,11 +1,11 @@
 import React, {useContext, useEffect} from 'react'
-import ChatList from './ChatList';
-import MessageContext from '../context/message/MessageContext';
-import FriendsContext from '../context/friends/FriendsContext';
+import ChatList from '../chat/ChatList';
+import MessageContext from '../../context/message/MessageContext';
+import FriendsContext from '../../context/friends/FriendsContext';
 import { useNavigate, useLocation } from "react-router";
-import UserContext from '../context/users/UserContext';
-import SetAuthToken from '../utils/SetAuthToken';
-import { getSidebarDateLabel } from '../utils/dateUtils';
+import UserContext from '../../context/users/UserContext';
+import SetAuthToken from '../../utils/auth/SetAuthToken';
+import { getSidebarDateLabel } from '../../utils/helpers/dateUtils';
 
 const SidebarList = () => {
    const navigate = useNavigate();

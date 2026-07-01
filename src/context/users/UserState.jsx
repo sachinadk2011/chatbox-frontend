@@ -1,8 +1,8 @@
 import UserContext from "./UserContext";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import {api} from '../../utils/SetAuthToken';
-import setupAxiosInterceptors from "../../utils/SetupAxiosInterceptors";
+import {api} from '../../utils/auth/SetAuthToken';
+import setupAxiosInterceptors from "../../utils/auth/SetupAxiosInterceptors";
 
 
 const throwFriendlyError = (error) => {

@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
-import {LastActive} from '../utils/dateUtils';
-import MessageContext from '../context/message/MessageContext';
-import FriendsContext from '../context/friends/FriendsContext';
+import {LastActive} from '../../utils/helpers/dateUtils';
+import MessageContext from '../../context/message/MessageContext';
+import FriendsContext from '../../context/friends/FriendsContext';
 
 /**
  * ProfileHeader

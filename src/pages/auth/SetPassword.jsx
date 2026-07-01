@@ -1,5 +1,5 @@
 import { useContext, useState, useEffect } from 'react';
-import UserContext from '../context/users/UserContext';
+import UserContext from '../../context/users/UserContext';
 import { useNavigate } from "react-router-dom";
 
 const SetPassword = () => {

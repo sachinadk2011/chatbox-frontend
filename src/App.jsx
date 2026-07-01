@@ -1,37 +1,37 @@
 import React, { useContext, useEffect, useCallback, useState } from 'react';
 import './App.css';
-import Login from './auth_pages/Login';
+import Login from './pages/auth/Login';
 import {
   BrowserRouter as Router, Routes, Route,
   useNavigate, Navigate, useLocation, matchPath
 } from "react-router-dom";
-import SignUp from './auth_pages/SignUp';
+import SignUp from './pages/auth/SignUp';
 import ChatRoom from './pages/ChatRoom';
 import { UserState } from './context/users/UserState';
 import { MessageState } from './context/message/MessageState';
 import { FriendsState } from './context/friends/FriendsState';
 import UserContext from './context/users/UserContext';
 import MessageContext from './context/message/MessageContext';
-import SetAuthToken from './utils/SetAuthToken';
-import socket from './server/socket';
+import SetAuthToken from './utils/auth/SetAuthToken';
+import socket from './services/socket';
 import FrdConnection from './pages/FrdConnection';
 import SuggestionsFriend from './component/friends/SuggestionFriend';
-import Navbar from './component/Navbar';
+import Navbar from './component/layout/Navbar';
 import ReceivedReq from './component/friends/ReceivedReq';
 import SentfrdReq from './component/friends/SentfrdReq';
-import VerificationCode from './auth_pages/VerifyOtpCode';
-import UpdateEmail from './auth_pages/UpdateEmail';
-import SetPassword from './auth_pages/SetPassword';
+import VerificationCode from './pages/auth/VerifyOtpCode';
+import UpdateEmail from './pages/auth/UpdateEmail';
+import SetPassword from './pages/auth/SetPassword';
 import ErrorPage from './pages/ErrorPage';
-import ServerWakingBanner from './component/ServerWakingBanner';
-import { subscribeBackendStatus, getBackendStatus, isDevEnvironment, markBackendOnline } from './utils/backendStatus';
-import { getTokenExpiry } from './utils/tokenUtils';
+import ServerWakingBanner from './component/ui/ServerWakingBanner';
+import { subscribeBackendStatus, getBackendStatus, isDevEnvironment, markBackendOnline } from './utils/helpers/backendStatus';
+import { getTokenExpiry } from './utils/auth/tokenUtils';
 import axios from 'axios';
-import { requestNotificationPermission} from './utils/notificationUtils';
-import NotificationPrompt from './component/NotificationPrompt';
-import {getDeviceId, getDeviceInfo } from './utils/userDeviceInfo';
+import { requestNotificationPermission, showChatNotificationFromFCM } from './utils/notification/notificationUtils';
+import NotificationPrompt from './component/notifications/NotificationPrompt';
+import {getDeviceId, getDeviceInfo } from './utils/helpers/userDeviceInfo';
 import { listenForegroundMessages } from './utils/notification/firebase';
-import { showChatNotificationFromFCM } from './utils/notificationUtils';
+
 
 const EMPTY_USER = {
   receiverId: null, receiverName: '', senderId: null, senderName: '',

@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
-import UserContext from '../context/users/UserContext';
-import ImageLightbox from './ImageLightbox';
+import UserContext from '../../context/users/UserContext';
+import ImageLightbox from '../ui/ImageLightbox';
 
 /* ── Download helper ─────────────────────────────────────────────────────── */
 const getDownloaded = () => { try { return JSON.parse(localStorage.getItem('chat_dl') || '{}'); } catch { return {}; } };

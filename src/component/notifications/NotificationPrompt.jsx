@@ -1,8 +1,8 @@
 import { useState, useEffect, useContext } from 'react';
-import { requestNotificationPermission, getNotificationStatus } from '../utils/notificationUtils';
-import { GetfcmToken } from '../utils/notification/firebase';
-import UserContext from '../context/users/UserContext';
-import { getDeviceId } from "../utils/userDeviceInfo";
+import { requestNotificationPermission, getNotificationStatus } from '../../utils/notification/notificationUtils';
+import { GetfcmToken } from '../../utils/notification/firebase';
+import UserContext from '../../context/users/UserContext';
+import { getDeviceId } from "../../utils/helpers/userDeviceInfo";
 import PushBlockedModal from './PushBlockedModal';
 
 

@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import '../App.css';
-import ProfileHeader from './ProfileHeader';
+import '../../App.css';
+import ProfileHeader from '../layout/ProfileHeader';
 import MessageBox from './MessageBox';
-import MessageContext from '../context/message/MessageContext';
+import MessageContext from '../../context/message/MessageContext';
 import Picker from 'emoji-picker-react';
 
 const ChatWindow = ({ onBack }) => {

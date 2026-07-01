@@ -1,9 +1,9 @@
 import MessageContext from "./MessageContext";
 import React, { useState, useCallback, useContext, useEffect, useRef, useMemo } from 'react';
 import UserContext from "../users/UserContext";
-import socket from "../../server/socket";
-import { api } from '../../utils/SetAuthToken';
-import { showChatNotification, clearNotificationsForSender } from "../../utils/notificationUtils";
+import socket from "../../services/socket";
+import { api } from '../../utils/auth/SetAuthToken';
+import { showChatNotification, clearNotificationsForSender } from "../../utils/notification/notificationUtils";
 
 export const MessageState = (props) => {
   const { user } = useContext(UserContext);

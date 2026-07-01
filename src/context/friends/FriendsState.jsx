@@ -1,6 +1,6 @@
 import FriendsContext from "./FriendsContext";
 import { useState, useCallback, useMemo } from "react";
-import { api } from '../../utils/SetAuthToken';
+import { api } from '../../utils/auth/SetAuthToken';
 
 const throwFriendlyError = (error) => {
   const message = error.response?.data.error || error.response?.data.message || error.message || "Something went wrong";

@@ -1,8 +1,8 @@
 import { useContext, useState } from 'react';
-import UserContext from '../context/users/UserContext';
+import UserContext from '../../context/users/UserContext';
 import { useNavigate } from "react-router-dom";
-import SetAuthToken from '../utils/SetAuthToken';
-import { getDeviceInfo } from "../utils/userDeviceInfo";
+import SetAuthToken from '../../utils/auth/SetAuthToken';
+import { getDeviceInfo } from "../../utils/helpers/userDeviceInfo";
 
 const VerificationCode = () => {
   const { verifyOtp, getUser, setUser, resendOtp } = useContext(UserContext);

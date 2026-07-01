@@ -1,6 +1,6 @@
 import React, { useEffect, useContext } from 'react';
 import { useParams } from 'react-router-dom';
-import ChatLayout from '../component/ChatLayout';
+import ChatLayout from '../component/chat/ChatLayout';
 import MessageContext from '../context/message/MessageContext';
 import FriendsContext from '../context/friends/FriendsContext';
 

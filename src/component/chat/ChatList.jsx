@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import MessageContext from '../context/message/MessageContext';
+import MessageContext from '../../context/message/MessageContext';
 
 const EMPTY_USER = {
   receiverId: null, receiverName: '', senderId: null, senderName: '',

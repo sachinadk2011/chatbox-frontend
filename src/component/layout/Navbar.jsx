@@ -1,8 +1,8 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import UserContext from '../context/users/UserContext';
-import MessageContext from '../context/message/MessageContext';
-import { getDeviceId } from '../utils/userDeviceInfo';
+import UserContext from '../../context/users/UserContext';
+import MessageContext from '../../context/message/MessageContext';
+import { getDeviceId } from '../../utils/helpers/userDeviceInfo';
 
 /**
  * Navbar
