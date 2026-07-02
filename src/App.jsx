@@ -186,7 +186,7 @@ function AppContent() {
   }, [location.pathname, setSelectedUser]);
 
 
-// ── Update browser tab title with unread count ──
+// ── Update browser tab title with unread count ── ✅
 useEffect(() => {
   document.title = totalUnread > 0
     ? `(${totalUnread > 99 ? '99+' : totalUnread}) Chat Waves`
@@ -272,6 +272,7 @@ useEffect(() => {
     }
   }, [setUser]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // onestatus change, refetch user to update onlineStatus/lastActive ✅
   useEffect(() => {
     fetchUser();
     const goOffline = () => { setIsOnline(false); setUser(p => ({ ...p, onlineStatus: false })); };
