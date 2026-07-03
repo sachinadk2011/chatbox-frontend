@@ -193,7 +193,7 @@ useEffect(() => {
     : 'Chat Waves - Real-time Chat App';
 }, [totalUnread]);
 
-// inside AppContent, alongside your other useEffects:
+// inside AppContent, alongside your other useEffects:✅
 useEffect(() => {
   const unsubscribe = listenForegroundMessages((payload) => {
     const senderId = payload.data?.senderId;
@@ -205,7 +205,7 @@ useEffect(() => {
   return () => unsubscribe?.();
 }, [selectedUserRef ]);
 
-// ── Bridge service worker postMessage → same custom event the rest of the app listens for ──
+// ── Bridge service worker postMessage → same custom event the rest of the app listens for ──    ✅
 useEffect(() => {
   if (!('serviceWorker' in navigator)) return;
 
@@ -222,7 +222,7 @@ useEffect(() => {
   return () => navigator.serviceWorker.removeEventListener('message', handler);
 }, []);
 
-// ── Handle notification click → navigate to that chat (no page reload) ──
+// ── Handle notification click → navigate to that chat (no page reload) ── ✅
 useEffect(() => {
   const handler = (e) => {
     console.info('Notification click event received:', e);
@@ -232,6 +232,8 @@ useEffect(() => {
   return () => window.removeEventListener('navigateToChat', handler);
 }, [navigate, Selecteduser?.receiverId]);
 
+
+// ── Fetch user data on app load and on network status change ── ✅
   const fetchUser = useCallback(async () => {
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -285,7 +287,7 @@ useEffect(() => {
     };
   }, [fetchUser]);
 
-  // ── Proactive token refresh — fires 2 min before expiry ──
+  // ── Proactive token refresh — fires 2 min before expiry ── ✅
   useEffect(() => {
     if (!user?.id) return;
 

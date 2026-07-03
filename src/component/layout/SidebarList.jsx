@@ -1,4 +1,4 @@
-import React, {useContext, useEffect} from 'react'
+import React, {useContext, useEffect, useMemo} from 'react'
 import ChatList from '../chat/ChatList';
 import MessageContext from '../../context/message/MessageContext';
 import FriendsContext from '../../context/friends/FriendsContext';
@@ -18,7 +18,7 @@ const SidebarList = () => {
     
    
     
-
+// ── Fetch friends and messages for the sidebar ── ✅
     useEffect( () => {
       if (!user?.id) return; // wait until user is loaded
       
@@ -135,14 +135,14 @@ const SidebarList = () => {
   
 }
 
-const sortedFriends = [...friends].sort(
+const sortedFriends = useMemo(() => [...friends].sort(
   (a,b)=>{
     const aDate = lastMsg.find(m => m.frdId === a._id)?.rawDate;
     const bDate = lastMsg.find(m => m.frdId === b._id)?.rawDate;
   
   return (bDate ? new Date(bDate) : 0) - (aDate ? new Date(aDate) : 0);
   }
-)
+), [friends, lastMsg])
 
     
     return(
