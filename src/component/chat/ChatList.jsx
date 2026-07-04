@@ -47,6 +47,7 @@ const SidebarTick = ({ status }) => {
 
 const ChatList = ({
   name,
+  receiverId,
   message,
   onClick,
   mutualfrdlen,
@@ -167,7 +168,7 @@ const ChatList = ({
               className="absolute right-0 top-9 z-50 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1"
             >
               {/* Open chat — only when no chat is currently open */}
-              {!Selecteduser?.receiverId &&
+              {Selecteduser?.receiverId !== receiverId &&
                 <button
                   onClick={(e) => { e.stopPropagation(); onClick(); setMenuOpen(false); }}
                   className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
@@ -180,7 +181,7 @@ const ChatList = ({
               }
 
               {/* Close chat — only when a chat is open */}
-              {Selecteduser?.receiverId && (
+              {Selecteduser?.receiverId === receiverId && (
                 <button
                   onClick={(e) => { e.stopPropagation(); handleCloseChat(); }}
                   className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"

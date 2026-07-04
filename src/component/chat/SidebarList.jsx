@@ -143,6 +143,7 @@ const SidebarList = () => {
             <ChatList
               variant={isFriendsPage ? 'friends' : 'chat'}
               name={element.name}
+              receiverId={element._id}
               message={msgData?.message}
               time={msgData?.time}
               status={msgData?.status}
