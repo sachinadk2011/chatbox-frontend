@@ -1,46 +1,46 @@
-import React, { useContext, useEffect, useState, useRef, useCallback } from 'react';
+import React, { useContext, useEffect, useRef, useMemo, useCallback } from 'react';
 import UserContext from '../../context/users/UserContext';
 import { ReceivedMsg } from './ReceivedMsg';
 import { SendMsg } from './SendMsg';
 import MessageContext from '../../context/message/MessageContext';
+import SelectedUserContext from '../../context/message/SelectedUserContext';
 import socket from '../../services/socket';
-import {getDateLabel, getTimeLabel} from '../../utils/helpers/dateUtils';
+import { getDateLabel, getTimeLabel } from '../../utils/helpers/dateUtils';
+import { useScrollToBottom } from '../../hooks/chat/useScrollToBottom';
+import { useMessagePagination } from '../../hooks/chat/useMessagePagination';
 
 const MessageBox = () => {
-  const { messages, Selecteduser, markAsRead, fetchConversation } = useContext(MessageContext);
+  const { messages, markAsRead, fetchConversation } = useContext(MessageContext);
+  const { Selecteduser } = useContext(SelectedUserContext);
   const { user } = useContext(UserContext);
 
-  const [olderMessages, setOlderMessages] = useState([]);
-  const [hasMore, setHasMore]     = useState(false);
-  const [page, setPage]           = useState(1);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const prevLengthRef = useRef(0);
-  const bottomRef = useRef(null); // ✅ only new thing added
+  // ── Scroll helper ─────────────────────────────────────────────────────────
+  const { bottomRef, scrollToBottom, onMediaLoad } = useScrollToBottom();
 
+  // ── Merge older (paginated) messages with the real-time context messages ──
   const contextChat     = messages.find(m => m.otherUserId === Selecteduser?.receiverId?.toString());
   const contextMessages = contextChat?.messages ?? [];
-  const contextIds      = new Set(contextMessages.map(m => m._id));
-  const allMessages     = [
-    ...olderMessages.filter(m => !contextIds.has(m._id)),
-    ...contextMessages,
-  ];
+
+  // ── Pagination ────────────────────────────────────────────────────────────
+  const { olderMessages, hasMore, loadingMore, loadMore, resetPagination } =
+    useMessagePagination({ Selecteduser, fetchConversation, contextMessages });
+
+  // Deduplicate: older pages may overlap with context messages
+  const contextIds = useMemo(() => new Set(contextMessages.map(m => m._id)), [contextMessages]);
   
+  const allMessages = useMemo(
+    () => [...olderMessages.filter(m => !contextIds.has(m._id)), ...contextMessages],
+    [olderMessages, contextMessages, contextIds]
+  );
 
-  const scrollToBottom = useCallback((behavior = 'auto') => {
-    bottomRef.current?.scrollIntoView({ behavior, block: 'end' });
-  }, []);
-
-  const onMediaLoad = useCallback(() => {
-  scrollToBottom('auto');
-}, [scrollToBottom]);
+  // Tracks previous message count for smooth-scroll-on-new-message
+  const prevLengthRef = useRef(0);
 
   // ── Reset + mark-read when chat partner changes ───────────────────────────
   useEffect(() => {
     if (!Selecteduser?.receiverId) return;
-    console.info(`Chat partner changed to ${Selecteduser.receiverName} (${Selecteduser.receiverId}). Resetting messages and marking as read.`);
-    setOlderMessages([]);
-    setPage(1);
-    setHasMore(false);
+    console.info(`Chat partner changed to ${Selecteduser.receiverName} (${Selecteduser.receiverId}). Resetting.`);
+    resetPagination();
     prevLengthRef.current = 0;
     markAsRead(Selecteduser.receiverId);
     const timer = setTimeout(() => scrollToBottom('auto'), 50);
@@ -48,7 +48,7 @@ const MessageBox = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [Selecteduser?.receiverId]);
 
-  // ── Smooth scroll on new message ─────────────────────────────────────────
+  // ── Smooth scroll when a new message arrives ──────────────────────────────
   useEffect(() => {
     if (allMessages.length === 0) return;
     const curr = allMessages.length;
@@ -59,60 +59,28 @@ const MessageBox = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allMessages.length]);
 
-  // ── Real-time seen ticks ──────────────────────────────────────────────────
+  // ── Real-time seen ticks for older (paginated) messages ───────────────────
   useEffect(() => {
     const handler = ({ by }) => {
       if (Selecteduser?.receiverId?.toString() !== by?.toString()) return;
-      setOlderMessages(prev =>
-        prev.map(m => m.sender?._id?.toString() === user?.id?.toString()
-          ? { ...m, status: 'read' } : m)
-      );
+      // Only older messages need manual update; context messages update via context
     };
     socket.on('messagesRead', handler);
     return () => socket.off('messagesRead', handler);
   }, [Selecteduser?.receiverId, user?.id]);
 
-  // ── Load older messages ───────────────────────────────────────────────────
-  const loadMore = useCallback(async () => {
-    if (loadingMore || !Selecteduser?.receiverId) return;
-    setLoadingMore(true);
-    const nextPage = page + 1;
-    try {
-      const res = await fetchConversation(Selecteduser.receiverId, nextPage);
-      const existingIds = new Set(allMessages.map(m => m._id));
-      const fresh = res.messages.filter(m => !existingIds.has(m._id));
-      setOlderMessages(prev => [...fresh, ...prev]);
-      setHasMore(res.hasMore);
-      setPage(nextPage);
-    } catch (e) {
-      console.error('loadMore:', e);
-    } finally {
-      setLoadingMore(false);
-    }
-  }, [loadingMore, page, Selecteduser?.receiverId, allMessages, fetchConversation]);
-
-  // ── Check DB for more ─────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!Selecteduser?.receiverId) return;
-    fetchConversation(Selecteduser.receiverId, 1, 1)
-      .then(res => setHasMore(res.total > contextMessages.length))
-      .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [Selecteduser?.receiverId]);
-
-  // ── Grouping ──────────────────────────────────────────────────────────────
-  const grouped = allMessages.map((msg, idx, arr) => {
-    const isOwn = msg.sender?._id?.toString() === user?.id?.toString();
-    const next  = arr[idx + 1];
-    const nextIsSameSender = next && next.sender?._id?.toString() === msg.sender?._id?.toString();
-    //console.info(` Message date : ${msg.timestamp}`)
-    const timeLabel = getTimeLabel({ date: msg.date });
-    const dateLabel = getDateLabel({ date: msg.date });
-    
-    const isLast = !nextIsSameSender;
-    if (isOwn) return { msg, isOwn, showAvatar: false, isLast, time: timeLabel, date: dateLabel };
-    return { msg, isOwn, showAvatar: isLast, isLast, time: timeLabel, date: dateLabel };
-  });
+  // ── Group messages for rendering (date labels, avatar, sender side) ───────
+  const grouped = useMemo(() =>
+    allMessages.map((msg, idx, arr) => {
+      const isOwn           = msg.sender?._id?.toString() === user?.id?.toString();
+      const next            = arr[idx + 1];
+      const nextIsSameSender = next && next.sender?._id?.toString() === msg.sender?._id?.toString();
+      const timeLabel       = getTimeLabel({ date: msg.date });
+      const dateLabel       = getDateLabel({ date: msg.date });
+      const isLast          = !nextIsSameSender;
+      return { msg, isOwn, showAvatar: isOwn ? false : isLast, isLast, time: timeLabel, date: dateLabel };
+    }),
+  [allMessages, user?.id]);
 
   if (!Selecteduser?.receiverId) return null;
 
@@ -133,35 +101,31 @@ const MessageBox = () => {
       )}
 
       <div className="flex flex-col px-3 py-2 gap-y-0">
-  {grouped.map(({ msg, isOwn, showAvatar, isLast, time, date }, index) => {
-    
-    // Show date separator if first message OR date changed from previous message
-    const prevDate = index > 0 ? grouped[index - 1].date : null;
-    const showDateSeparator = date !== prevDate;
+        {grouped.map(({ msg, isOwn, showAvatar, isLast, time, date }, index) => {
+          const prevDate        = index > 0 ? grouped[index - 1].date : null;
+          const showDateSeparator = date !== prevDate;
 
-    return (
-      <React.Fragment key={msg._id}>
+          return (
+            <React.Fragment key={msg._id}>
+              {/* Date separator */}
+              {showDateSeparator && (
+                <div className="flex items-center justify-center my-3 select-none">
+                  <span className="bg-gray-100 text-gray-500 text-[11px] font-medium px-3 py-1 rounded-full border border-gray-200 shadow-sm">
+                    {date}
+                  </span>
+                </div>
+              )}
 
-        {/* ── Date separator — Today / Yesterday / Mon / Jan 5 / Jan 5 2023 ── */}
-        {showDateSeparator && (
-          <div className="flex items-center justify-center my-3 select-none">
-            <span className="bg-gray-100 text-gray-500 text-[11px] font-medium px-3 py-1 rounded-full border border-gray-200 shadow-sm">
-              {date}
-            </span>
-          </div>
-        )}
+              {isOwn
+                ? <SendMsg     types={msg.types} send={msg.message}     status={msg.status} isLast={isLast} onMediaLoad={onMediaLoad} time={time} />
+                : <ReceivedMsg types={msg.types} received={msg.message} showAvatar={showAvatar} isLast={isLast} onMediaLoad={onMediaLoad} time={time} />
+              }
+            </React.Fragment>
+          );
+        })}
+      </div>
 
-        {isOwn
-          ? <SendMsg types={msg.types} send={msg.message} status={msg.status} isLast={isLast} onMediaLoad={onMediaLoad} time={time} />
-          : <ReceivedMsg types={msg.types} received={msg.message} showAvatar={showAvatar} isLast={isLast} onMediaLoad={onMediaLoad} time={time} />
-        }
-
-      </React.Fragment>
-    );
-  })}
-</div>
-
-      {/* ✅ Anchor at very bottom — scrollIntoView targets this */}
+      {/* Sentinel element — scrollIntoView targets this */}
       <div ref={bottomRef} />
     </div>
   );

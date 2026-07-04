@@ -1,3 +1,23 @@
+/**
+ * Header.jsx
+ *
+ * STATUS: Intentional UI placeholder — NOT dead code.
+ *
+ * PURPOSE:
+ *   Reserved for a future in-app search feature.
+ *   The search bar below is non-functional (no state, no API calls).
+ *   It exists to hold the visual space and anchor CSS layout in ChatLayout.
+ *
+ * DO NOT:
+ *   - Delete this file — it will be implemented in a future sprint.
+ *   - Add search state, handlers, or API calls here without a design review.
+ *   - Remove the <Header /> usage in ChatLayout.jsx.
+ *
+ * FUTURE:
+ *   When search is implemented, add: onSearch prop, debounce hook, results
+ *   dropdown. The existing JSX structure (form + input) is intentionally kept
+ *   so the future implementation slots in with minimal rework.
+ */
 // Header.jsx
 import React from 'react';
 

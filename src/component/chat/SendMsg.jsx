@@ -104,7 +104,7 @@ const SeenTick = ({ status }) => {
  *   → adds extra bottom margin to visually separate groups.
  *   → sender never shows an avatar (own messages), but isLast controls spacing.
  */
-export const SendMsg = ({ types, send, status, isLast = true, onMediaLoad, time  }) => {
+const SendMsgBase = ({ types, send, status, isLast = true, onMediaLoad, time  }) => {
   const { user } = useContext(UserContext);
   const [lightbox, setLightbox] = useState(null);
 
@@ -331,3 +331,11 @@ if (msgType === 'video') {
     </div>
   );
 };
+
+/**
+ * React.memo — WHY:
+ *   SendMsg renders one sent message bubble. Without memo, every incoming socket
+ *   message causes MessageContext to change, which re-renders ALL existing bubbles.
+ *   With memo, a bubble only re-renders when its own status/content props change.
+ */
+export const SendMsg = React.memo(SendMsgBase);

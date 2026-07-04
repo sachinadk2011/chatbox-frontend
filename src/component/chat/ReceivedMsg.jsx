@@ -1,6 +1,7 @@
 import React, { useContext, useState } from 'react';
-import MessageContext from '../../context/message/MessageContext';
+import SelectedUserContext from '../../context/message/SelectedUserContext';
 import ImageLightbox from '../ui/ImageLightbox';
+import { getProfileImageUrl } from '../../utils/helpers/profileUtils';
 
 /* ── Download helper ─────────────────────────────────────────────────────── */
 const getDownloaded = () => { try { return JSON.parse(localStorage.getItem('chat_dl') || '{}'); } catch { return {}; } };
@@ -63,17 +64,15 @@ const MediaGrid = ({ files, onOpen , onMediaLoad }) => {
  * showAvatar: true on the LAST consecutive message from this person → show avatar.
  * isLast:     true on the LAST consecutive message → add group-end spacing.
  */
-export const ReceivedMsg = ({ types, received, showAvatar = true, isLast = true, onMediaLoad, time }) => {
-  const { Selecteduser } = useContext(MessageContext);
+const ReceivedMsgBase = ({ types, received, showAvatar = true, isLast = true, onMediaLoad, time }) => {
+  const { Selecteduser } = useContext(SelectedUserContext);
   const [lightbox, setLightbox] = useState(null);
 
   let filesArray = [];
   if (types === 'multiple') { try { filesArray = JSON.parse(received); } catch { } }
 
-  const profile_url = `https://ui-avatars.com/api/?name=${encodeURIComponent(Selecteduser.receiverName || 'U')}&background=random&color=random&bold=true&rounded=true`;
-  const resizedUrl  = Selecteduser.profile_url
-    ? Selecteduser.profile_url.replace('/upload/', '/upload/w_200,h_200,c_fill,g_face/')
-    : null;
+  // Cloudinary face-crop → UI Avatars fallback
+  const avatarSrc = getProfileImageUrl(Selecteduser.receiverName, Selecteduser.profile_url);
 
   const msgType    = types || 'text';
   const msgContent = received ?? '';
@@ -87,7 +86,7 @@ export const ReceivedMsg = ({ types, received, showAvatar = true, isLast = true,
   const avatarSlot = (
     <div className="w-6 h-6 flex-shrink-0 mr-2 self-end">
       {showAvatar
-        ? <img src={resizedUrl || profile_url} alt="avatar" className="w-6 h-6 rounded-full object-cover" />
+        ? <img src={avatarSrc} alt="avatar" className="w-6 h-6 rounded-full object-cover" />
         : <div className="w-6 h-6" />}
     </div>
   );
@@ -263,3 +262,10 @@ const remainingCount = totalImages - maxPreviews;
     </div>
   );
 };
+
+/**
+ * React.memo — WHY:
+ *   Every received bubble re-rendering on each new message is a pure waste.
+ *   With memo, only new/changed bubbles update.
+ */
+export const ReceivedMsg = React.memo(ReceivedMsgBase);

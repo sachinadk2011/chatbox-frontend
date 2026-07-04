@@ -3,6 +3,8 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import UserContext from '../../context/users/UserContext';
 import MessageContext from '../../context/message/MessageContext';
 import { getDeviceId } from '../../utils/helpers/userDeviceInfo';
+import { getProfileImageUrl } from '../../utils/helpers/profileUtils';
+
 
 /**
  * Navbar
@@ -16,10 +18,9 @@ const Navbar = () => {
   const { user, logout, setUser } = React.useContext(UserContext);
   const { totalUnread } = React.useContext(MessageContext);
 
-  const profile_url = `https://ui-avatars.com/api/?name=${user?.name}&background=6366f1&color=fff&bold=true&rounded=true`;
-  const resizedUrl = user.profile_Url
-    ? user.profile_Url.replace('/upload/', '/upload/w_200,h_200,c_fill,g_face/')
-    : false;
+  // Cloudinary face-crop → UI Avatars fallback (indigo background for self)
+  const avatarSrc = getProfileImageUrl(user?.name, user?.profile_Url, { background: '6366f1', color: 'fff' });
+
 
   const navigate = useNavigate();
 
@@ -138,7 +139,7 @@ const Navbar = () => {
         {/* Profile */}
         <div className="mb-7 flex-shrink-0">
           <img
-            src={resizedUrl || profile_url}
+            src={avatarSrc}
             alt={user?.name || 'Profile'}
             className="w-10 h-10 rounded-full object-cover ring-2 ring-indigo-200"
           />
@@ -220,7 +221,7 @@ const Navbar = () => {
         {/* Profile avatar - leftmost */}
         <div className="flex-shrink-0 snap-start flex flex-col items-center px-3 py-2 gap-0.5">
           <img
-            src={resizedUrl || profile_url}
+            src={avatarSrc}
             alt="me"
             className="w-7 h-7 rounded-full object-cover ring-2 ring-indigo-300"
           />
@@ -283,4 +284,12 @@ const Navbar = () => {
   );
 };
 
-export default Navbar;
+/**
+ * React.memo — WHY:
+ *   Navbar reads user and totalUnread from context. Without memo it re-renders
+ *   on every incoming message (MessageContext change). With memo it only
+ *   re-renders when user or totalUnread actually changes.
+ *
+ *   Safe: Navbar has no local state that depends on anything outside its props.
+ */
+export default React.memo(Navbar);

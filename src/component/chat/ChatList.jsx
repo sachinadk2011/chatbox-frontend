@@ -1,13 +1,33 @@
+/**
+ * ChatList.jsx
+ *
+ * PURPOSE:
+ *   Renders a single friend row in the sidebar.
+ *
+ * VARIANT PROP:
+ *   variant — 'chat' (default) | 'friends'
+ *     'chat'    — shows last-message preview, delivery tick, unread badge,
+ *                 timestamp, and the 3-dot "Close Chat" context menu.
+ *     'friends' — shows mutual-friend count + total-friend count instead of
+ *                 the message preview. Hides unread badge and context menu.
+ *
+ *   WHY a prop instead of useLocation:
+ *     The parent (SidebarList) already knows which section it's in and passes
+ *     the variant explicitly. This removes the useLocation call from ChatList,
+ *     making it route-agnostic and reusable in any future context that needs
+ *     the same card layout (groups sidebar, archived chats, etc.).
+ *
+ * CLOSE HANDLER:
+ *   onClose — () => void — passed from SidebarList; called when the user
+ *     clicks "Close Chat" in the 3-dot menu. SidebarList owns the navigation
+ *     + setSelectedUser logic; ChatList only manages local menu state.
+ */
+
 import React, { useState, useRef, useEffect, useContext } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import MessageContext from '../../context/message/MessageContext';
+import SelectedUserContext from '../../context/message/SelectedUserContext';
+import { getProfileImageUrl } from '../../utils/helpers/profileUtils';
 
-const EMPTY_USER = {
-  receiverId: null, receiverName: '', senderId: null, senderName: '',
-  lastActive: null, onlineStatus: false, profile_url: null,
-};
-
-// ── Mini tick for sidebar ─────────────────────────────────────────
+// ── Mini delivery tick for the sidebar ───────────────────────────────────────
 const SidebarTick = ({ status }) => {
   if (status === 'sent') {
     return (
@@ -25,112 +45,114 @@ const SidebarTick = ({ status }) => {
   );
 };
 
-const ChatList = ({ name, message, onClick, mutualfrdlen, profileUrl, frdlen, time, status, isOwn, unreadCount }) => {
-  const { Selecteduser, setSelectedUser } = useContext(MessageContext);
-  const location = useLocation();
-  const navigate = useNavigate();
-  const isFriendsPage = location.pathname.startsWith('/friends');
+const ChatList = ({
+  name,
+  message,
+  onClick,
+  mutualfrdlen,
+  profileUrl,
+  frdlen,
+  time,
+  status,
+  isOwn,
+  unreadCount,
+  variant = 'chat', // 'chat' | 'friends'
+  onClose,          // () => void — only used in 'chat' variant context menu
+}) => {
+  const { Selecteduser } = useContext(SelectedUserContext);
   const [isHovered, setIsHovered] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef(null);
+  const [menuOpen,  setMenuOpen]  = useState(false);
+  const menuRef    = useRef(null);
   const dotsBtnRef = useRef(null);
-  const hasUnread = unreadCount > 0 && !isFriendsPage ;
-  const previewMessage = hasUnread && unreadCount > 1 ? unreadCount <= 4 ? `new message's ${unreadCount}` : `new messages 4+` : message;
 
-  
-  
+  const isFriendsVariant = variant === 'friends';
+  const hasUnread        = unreadCount > 0 && !isFriendsVariant;
+  const previewMessage   = hasUnread && unreadCount > 1
+    ? unreadCount <= 4 ? `new message's ${unreadCount}` : 'new messages 4+'
+    : message;
 
-  const profile_url = `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'U')}&background=random&color=random&bold=true&rounded=true`;
-  const resizedUrl = profileUrl
-    ? profileUrl.replace('/upload/', '/upload/w_200,h_200,c_fill,g_face/')
-    : null;
+  // Cloudinary → UI Avatars fallback via shared util
+  const avatarSrc = getProfileImageUrl(name, profileUrl);
 
+  // Close context menu when clicking outside
   useEffect(() => {
-    if (!menuOpen) return ;
-
-    const handler = (e) => { 
-      if (menuRef.current && !menuRef.current.contains(e.target) && dotsBtnRef.current && !dotsBtnRef.current.contains(e.target))
-        setMenuOpen(false); 
+    if (!menuOpen) return;
+    const handler = (e) => {
+      if (
+        menuRef.current    && !menuRef.current.contains(e.target) &&
+        dotsBtnRef.current && !dotsBtnRef.current.contains(e.target)
+      ) setMenuOpen(false);
     };
-     document.addEventListener('mousedown', handler);
+    document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [menuOpen]);
 
-  // Close menu when mouse leaves the whole card 
-  const handleMouseLeave = ()=>{
+  const handleMouseLeave = () => {
     setIsHovered(false);
     setMenuOpen(false);
-
   };
 
-  const handleDotsClick = (e) =>{
+  const handleDotsClick = (e) => {
     e.stopPropagation();
-    setMenuOpen (p => !p);
+    setMenuOpen(p => !p);
   };
 
-
-  const closeChat = (e) =>{
-    const basePath = location.pathname.split('/').filter(Boolean);
-    const v1Index = basePath.indexOf("v1");
-    const endIndex = v1Index !== -1  ? v1Index : basePath.length;
-    /* console.info(`Closing chat, navigating to :${basePath.slice(0, endIndex).join('/')}`); */
-    
-    setSelectedUser(EMPTY_USER);
-    navigate(`/${basePath.slice(0, endIndex).join('/')}`);
+  // Delegates the actual navigation + selectedUser clear to the parent via onClose.
+  // ChatList only manages closing its own menu afterwards.
+  const handleCloseChat = () => {
+    onClose?.();
     setMenuOpen(false);
+  };
 
-  }
   return (
     <div
       className="relative flex items-center w-full cursor-pointer"
       onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={ handleMouseLeave }
+      onMouseLeave={handleMouseLeave}
       onClick={onClick}
     >
       {/* Avatar */}
-      <img src={resizedUrl || profile_url} alt={name}
+      <img src={avatarSrc} alt={name}
         className="w-12 h-12 rounded-full object-cover mr-3 flex-shrink-0" />
 
-      {/* Name + sub-text — depends on which page we're on */}
+      {/* Name + sub-text */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-1">
-        <h2 className={`text-sm  ${hasUnread && !isOwn && !isFriendsPage ? "font-black text-black": "font-semibold text-gray-800"} truncate`}>{name}</h2>
-        {/* ── Time — top right ── */}
-          {time && !isFriendsPage && (
-            <span className={`text-[11px] ${hasUnread && !isFriendsPage && !isOwn ? "font-black text-black": "text-gray-400"} flex-shrink-0 whitespace-nowrap`}>
+          <h2 className={`text-sm ${hasUnread && !isOwn && !isFriendsVariant ? 'font-black text-black' : 'font-semibold text-gray-800'} truncate`}>
+            {name}
+          </h2>
+          {time && !isFriendsVariant && (
+            <span className={`text-[11px] ${hasUnread && !isFriendsVariant && !isOwn ? 'font-black text-black' : 'text-gray-400'} flex-shrink-0 whitespace-nowrap`}>
               {time}
             </span>
           )}
         </div>
-        {isFriendsPage
-          /* Friends page: always show mutual friends count */
+
+        {isFriendsVariant
+          /* Friends variant: mutual + total friend count */
           ? <div className="flex space-x-3 text-xs text-gray-500">
               <span><strong>{mutualfrdlen ?? 0}</strong> Mutual</span>
               <span><strong>{frdlen ?? 0}</strong> Friends</span>
             </div>
-          /* Chat home: show last message preview */
-          : (
-          /* ── Preview row: tick (if own) + message text ── */
-          <div className="flex items-center gap-1 min-w-0">
-            {/* Show tick only for messages I sent */}
-            {isOwn && status && (
-              <span className="flex-shrink-0">
-                <SidebarTick status={status} />
-              </span>
-            )}
-          <p className={`text-xs  ${hasUnread && !isFriendsPage && !isOwn ? "font-black text-black": "text-gray-500"} truncate`}>
-              {previewMessage || <span className="italic text-gray-400">Tap to start chatting</span>}
-            </p>
-            </div>)
+          /* Chat variant: last message preview with delivery tick */
+          : <div className="flex items-center gap-1 min-w-0">
+              {isOwn && status && (
+                <span className="flex-shrink-0">
+                  <SidebarTick status={status} />
+                </span>
+              )}
+              <p className={`text-xs ${hasUnread && !isFriendsVariant && !isOwn ? 'font-black text-black' : 'text-gray-500'} truncate`}>
+                {previewMessage || <span className="italic text-gray-400">Tap to start chatting</span>}
+              </p>
+            </div>
         }
       </div>
 
-      {/* ── Desktop only: hover 3-dot menu ── */}
-      {isHovered  && (
-        <div  className="hidden md:flex items-center flex-shrink-0 ml-1"
-          onClick={e => e.stopPropagation()}>
+      {/* Desktop-only hover 3-dot context menu (chat variant only) */}
+      {isHovered && !isFriendsVariant && (
+        <div className="hidden md:flex items-center flex-shrink-0 ml-1" onClick={e => e.stopPropagation()}>
           <button
-            ref = {dotsBtnRef}
+            ref={dotsBtnRef}
             onClick={handleDotsClick}
             className="p-1.5 rounded-full hover:bg-gray-200 transition-colors text-gray-400 hover:text-gray-700"
           >
@@ -144,23 +166,23 @@ const ChatList = ({ name, message, onClick, mutualfrdlen, profileUrl, frdlen, ti
               ref={menuRef}
               className="absolute right-0 top-9 z-50 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1"
             >
-              {/* Open chat */}
-              {!Selecteduser?.receiverId && 
-              <button
-                onClick={(e) => { e.stopPropagation(); onClick(); setMenuOpen(false); }}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-indigo-400">
-                  <path fillRule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H6l-4 4V5z" clipRule="evenodd" />
-                </svg>
-                Open Chat
-              </button>
+              {/* Open chat — only when no chat is currently open */}
+              {!Selecteduser?.receiverId &&
+                <button
+                  onClick={(e) => { e.stopPropagation(); onClick(); setMenuOpen(false); }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-indigo-400">
+                    <path fillRule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H6l-4 4V5z" clipRule="evenodd" />
+                  </svg>
+                  Open Chat
+                </button>
               }
 
-              {/* Close chat — only show if this person's chat is currently open */}
+              {/* Close chat — only when a chat is open */}
               {Selecteduser?.receiverId && (
                 <button
-                  onClick={(e) => { e.stopPropagation(); closeChat();  }}
+                  onClick={(e) => { e.stopPropagation(); handleCloseChat(); }}
                   className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-gray-400">
@@ -169,7 +191,7 @@ const ChatList = ({ name, message, onClick, mutualfrdlen, profileUrl, frdlen, ti
                   Close Chat
                 </button>
               )}
-               </div>
+            </div>
           )}
         </div>
       )}
@@ -177,4 +199,10 @@ const ChatList = ({ name, message, onClick, mutualfrdlen, profileUrl, frdlen, ti
   );
 };
 
-export default ChatList;
+/**
+ * React.memo — safe: ChatList is a pure display component.
+ * Local state (hover, menu) is not shared externally.
+ * With memo, only the cards whose props actually changed re-render
+ * when a new message arrives in any conversation.
+ */
+export default React.memo(ChatList);

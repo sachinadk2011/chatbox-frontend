@@ -1,4 +1,5 @@
 import MessageContext from "./MessageContext";
+import SelectedUserContext from "./SelectedUserContext";
 import React, { useState, useCallback, useContext, useEffect, useRef, useMemo } from 'react';
 import UserContext from "../users/UserContext";
 import socket from "../../services/socket";
@@ -232,15 +233,33 @@ console.info("mesages change or not : ", messages);
   };
 
 
-  const  value = useMemo(() =>({
-messages, setMessages,
-      Selecteduser, setSelectedUser: setSelectedUserWithRef,
-      fetchMessages, fetchConversation, sendMessage, markAsRead, selectedUserRef,
-      drafts, setDraft, totalUnread
-  }), [messages, Selecteduser, drafts]);
+  /**
+   * SelectedUser value — only changes when the selected chat partner changes.
+   * ProfileHeader, ChatLayout, ChatList subscribe to this context and will NOT
+   * re-render when a new message arrives (messages changing won't touch this value).
+   */
+  const selectedUserValue = useMemo(() => ({
+    Selecteduser,
+    setSelectedUser: setSelectedUserWithRef,
+    selectedUserRef,
+  }), [Selecteduser]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /**
+   * MessageData value — only changes when messages, drafts, or totalUnread change.
+   * Navbar, SidebarList subscribe to this and will NOT re-render when the user
+   * switches chat partners.
+   */
+  const messageDataValue = useMemo(() => ({
+    messages, setMessages,
+    fetchMessages, fetchConversation, sendMessage, markAsRead,
+    drafts, setDraft, totalUnread,
+  }), [messages, drafts, totalUnread]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
-    <MessageContext.Provider value={value}>
-      {props.children}
-    </MessageContext.Provider>
+    <SelectedUserContext.Provider value={selectedUserValue}>
+      <MessageContext.Provider value={messageDataValue}>
+        {props.children}
+      </MessageContext.Provider>
+    </SelectedUserContext.Provider>
   );
 };
