@@ -1,8 +1,8 @@
 import React, {useEffect, useContext}  from 'react';
 import {useParams } from 'react-router-dom';
-import MessageContext from "../../context/message/MessageContext";
+import SelectedUserContext from "../../context/message/SelectedUserContext";
 import FriendsContext from '../../context/friends/FriendsContext';
-import ChatLayout from '../ChatLayout';
+import ChatLayout from '../chat/ChatLayout';
 
 /**
  * /friends/list route inner component.
@@ -10,7 +10,7 @@ import ChatLayout from '../ChatLayout';
  */
 const FriendList = () => {
     const { userId} = useParams();
-    const { setSelectedUser } = useContext(MessageContext);
+    const { setSelectedUser } = useContext(SelectedUserContext);
     const { friends } = useContext(FriendsContext);
 
     useEffect(() => {

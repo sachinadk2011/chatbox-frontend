@@ -37,6 +37,7 @@ const ReceivedReq = () => {
               friendlen={request.friends.length}
               profileUrl={request.profile_Url}
               email={request.email}
+              mode="received"
             />
           ))}
         </div>

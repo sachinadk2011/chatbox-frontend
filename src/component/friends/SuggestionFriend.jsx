@@ -37,6 +37,7 @@ const SuggestionsFriend = () => {
               friendlen={person.friends.length}
               profileUrl={person.profile_Url}
               email={person.email}
+              mode="add"
             />
           ))}
         </div>

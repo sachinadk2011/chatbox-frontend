@@ -1,12 +1,12 @@
 import React, { useEffect, useContext } from 'react';
 import { useParams } from 'react-router-dom';
-import ChatLayout from '../component/ChatLayout';
-import MessageContext from '../context/message/MessageContext';
+import ChatLayout from '../component/chat/ChatLayout';
+import SelectedUserContext from '../context/message/SelectedUserContext';
 import FriendsContext from '../context/friends/FriendsContext';
 
 const ChatRoom = () => {
-  const { userId } = useParams(); // undefined when at /chat, has value at /chat/v1/u/:userId
-  const { setSelectedUser } = useContext(MessageContext);
+  const { userId } = useParams(); // undefined when at /chats, has value at /chats/v1/u/:userId
+  const { setSelectedUser } = useContext(SelectedUserContext);
   const { friends } = useContext(FriendsContext);
 
   useEffect(() => {

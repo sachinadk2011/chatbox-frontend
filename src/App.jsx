@@ -1,42 +1,44 @@
 import React, { useContext, useEffect, useCallback, useState } from 'react';
 import './App.css';
-import Login from './auth_pages/Login';
+import Login from './pages/auth/Login';
 import {
   BrowserRouter as Router, Routes, Route,
   useNavigate, Navigate, useLocation, matchPath
 } from "react-router-dom";
-import SignUp from './auth_pages/SignUp';
+import SignUp from './pages/auth/SignUp';
 import ChatRoom from './pages/ChatRoom';
 import { UserState } from './context/users/UserState';
 import { MessageState } from './context/message/MessageState';
 import { FriendsState } from './context/friends/FriendsState';
 import UserContext from './context/users/UserContext';
 import MessageContext from './context/message/MessageContext';
-import SetAuthToken from './utils/SetAuthToken';
-import socket from './server/socket';
+import SelectedUserContext from './context/message/SelectedUserContext';
+import socket from './services/socket';
 import FrdConnection from './pages/FrdConnection';
 import SuggestionsFriend from './component/friends/SuggestionFriend';
-import Navbar from './component/Navbar';
+import Navbar from './component/layout/Navbar';
 import ReceivedReq from './component/friends/ReceivedReq';
 import SentfrdReq from './component/friends/SentfrdReq';
-import VerificationCode from './auth_pages/VerifyOtpCode';
-import UpdateEmail from './auth_pages/UpdateEmail';
-import SetPassword from './auth_pages/SetPassword';
+import VerificationCode from './pages/auth/VerifyOtpCode';
+import UpdateEmail from './pages/auth/UpdateEmail';
+import SetPassword from './pages/auth/SetPassword';
 import ErrorPage from './pages/ErrorPage';
-import ServerWakingBanner from './component/ServerWakingBanner';
-import { subscribeBackendStatus, getBackendStatus, isDevEnvironment, markBackendOnline } from './utils/backendStatus';
-import { getTokenExpiry } from './utils/tokenUtils';
-import axios from 'axios';
-import { requestNotificationPermission} from './utils/notificationUtils';
-import NotificationPrompt from './component/NotificationPrompt';
-import {getDeviceId, getDeviceInfo } from './utils/userDeviceInfo';
-import { listenForegroundMessages } from './utils/notification/firebase';
-import { showChatNotificationFromFCM } from './utils/notificationUtils';
+import ServerWakingBanner from './component/ui/ServerWakingBanner';
+import { subscribeBackendStatus, getBackendStatus, isDevEnvironment, markBackendOnline } from './utils/helpers/backendStatus';
+import { KNOWN_ROUTES, AUTH_PAGES } from './constants/routes';
+import { api } from './utils/auth/SetAuthToken';
+import NotificationPrompt from './component/notifications/NotificationPrompt';
+import { getDeviceInfo } from './utils/helpers/userDeviceInfo';
+import { EMPTY_USER } from './constants/user';
+// Custom hooks
+import { useAuthSession }              from './hooks/auth/useAuthSession';
+import { useTokenRefresh }             from './hooks/auth/useTokenRefresh';
+import { useForegroundNotifications } from './hooks/notifications/useForegroundNotifications';
+import { useNotificationBridge }      from './hooks/notifications/useNotificationBridge';
+import useTabTitle                    from './hooks/ui/useTabTitle';
 
-const EMPTY_USER = {
-  receiverId: null, receiverName: '', senderId: null, senderName: '',
-  lastActive: null, onlineStatus: false, profile_url: null,
-};
+
+// EMPTY_USER is now imported from constants/user.js
 
 console.info("app js: ", getDeviceInfo());
 
@@ -70,10 +72,10 @@ function RootRedirect() {
  * StatusGate renders children, and React Router shows the user's original URL
  * automatically. No page reload, no navigation needed.
  */
-const PING_URL = `${import.meta.env.VITE_URL || 'http://localhost:8000'}/api/auth/ping`;
+
 const POLL_INTERVAL_MS = 6000; // poll every 6 seconds while in error state
 
-const AUTH_ROUTES = ['/login', '/signup', '/verify-otp', '/forget-password', '/set-new-password'];
+const AUTH_ROUTES = AUTH_PAGES ;
 
 function StatusGate({ children }) {
   const location = useLocation();
@@ -95,7 +97,7 @@ function StatusGate({ children }) {
 
     const ping = async () => {
       try {
-        await axios.get(PING_URL, { timeout: 5000 });
+        await api.get("/api/auth/ping", { timeout: 5000 });
         // ✅ Server is back — recover without page reload
         markBackendOnline();
       } catch {
@@ -113,7 +115,7 @@ function StatusGate({ children }) {
   const handleRetry = useCallback(async () => {
     setIsRetrying(true);
     try {
-      await axios.get(PING_URL, { timeout: 5000 });
+      await api.get(PING_URL, { timeout: 5000 });
       markBackendOnline(); // triggers re-render → children show automatically
     } catch {
       // server still down — keep showing error page, auto-poll continues
@@ -156,23 +158,19 @@ function StatusGate({ children }) {
 function AppContent() {
   const navigate = useNavigate();
   const { getUser, setUser, user, RefreshToken } = useContext(UserContext);
-  const { selectedUserRef ,Selecteduser, setSelectedUser, totalUnread, markAsRead  } = useContext(MessageContext);
+  const { selectedUserRef, Selecteduser, setSelectedUser } = useContext(SelectedUserContext);
+  const { totalUnread, markAsRead } = useContext(MessageContext);
   const location = useLocation();
-  const [isOnline, setIsOnline] = useState(navigator.onLine); // eslint-disable-line no-unused-vars
 
   // All valid route patterns in the app
-  const KNOWN_ROUTES = [
-    '/', '/login', '/signup', '/verify-otp', '/forget-password', '/set-new-password',
-    '/chats', '/chats/v1/u/:userId',
-    '/friends/list', '/friends/list/v1/u/:userId',
-    '/friends/add-friend', '/friends/received-requests', '/friends/sent-requests',
-  ];
+  
   const is404 = !KNOWN_ROUTES.some(pattern => matchPath(pattern, location.pathname));
 
-  const AUTH_PAGES = ['/login', '/signup', '/verify-otp', '/forget-password', '/set-new-password'];
+ 
   const hideSidebar = AUTH_PAGES.includes(location.pathname) || is404;
 
-  // ── Close chat on ANY route change ──
+  // ── Close chat on ANY route change ──────────────────────────────────────
+  // Kept inline: this is routing logic specific to AppContent, not reusable.
   useEffect(() => {
     if (
       !location.pathname.startsWith('/chats/v1/u/') &&
@@ -185,160 +183,12 @@ function AppContent() {
     }
   }, [location.pathname, setSelectedUser]);
 
-
-// ── Update browser tab title with unread count ──
-useEffect(() => {
-  document.title = totalUnread > 0
-    ? `(${totalUnread > 99 ? '99+' : totalUnread}) Chat Waves`
-    : 'Chat Waves - Real-time Chat App';
-}, [totalUnread]);
-
-// inside AppContent, alongside your other useEffects:
-useEffect(() => {
-  const unsubscribe = listenForegroundMessages((payload) => {
-    const senderId = payload.data?.senderId;
-    console.info("app.js conetent foreground msg : ", senderId, " | payload: ", payload);
-    // Don't show if user is already viewing this chat
-    if (selectedUserRef?.current?.receiverId?.toString() === senderId) return;
-    showChatNotificationFromFCM(payload);
-  });
-  return () => unsubscribe?.();
-}, [selectedUserRef ]);
-
-// ── Bridge service worker postMessage → same custom event the rest of the app listens for ──
-useEffect(() => {
-  if (!('serviceWorker' in navigator)) return;
-
-  const handler = (event) => {
-    console.info('Message from service worker:', event.data);
-    if (event.data?.type === 'navigateToChat' && event.data?.senderId) {
-      window.dispatchEvent(
-        new CustomEvent('navigateToChat', { detail: { senderId: event.data.senderId } })
-      );
-    }
-  };
-
-  navigator.serviceWorker.addEventListener('message', handler);
-  return () => navigator.serviceWorker.removeEventListener('message', handler);
-}, []);
-
-// ── Handle notification click → navigate to that chat (no page reload) ──
-useEffect(() => {
-  const handler = (e) => {
-    console.info('Notification click event received:', e);
-    markAsRead(e.detail.senderId);
-    navigate(`/chats/v1/u/${e.detail.senderId}`);}
-  window.addEventListener('navigateToChat', handler);
-  return () => window.removeEventListener('navigateToChat', handler);
-}, [navigate, Selecteduser?.receiverId]);
-
-  const fetchUser = useCallback(async () => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-    SetAuthToken(token);
-    try {
-      const userData = await getUser();
-      if (userData.success) {
-        setUser({
-          name: userData.user.name,
-          email: userData.user.email,
-          id: userData.user.id,
-          onlineStatus: userData.user.onlineStatus,
-          lastActive: userData.user.lastActive,
-          profile_Url: userData.user.profile_Url,
-          public_id: userData.user.public_id,
-        });
-        // ✅ Only redirect if on a page that has nothing to show logged-in users
-      const currentPath = window.location.pathname;
-      const isAuthPage = [...AUTH_PAGES, '/'].includes(currentPath);
-      if (isAuthPage) {
-        // Respect ?redirect= param (e.g. from portfolio ChatWaves button)
-        const params = new URLSearchParams(window.location.search);
-        const redirectTo = params.get('redirect') || '/chats';
-        navigate(redirectTo);
-      }
-      // If already at /chats/v1/u/abc123 or /friends/list — stay exactly there
-      }
-    } catch (error) {
-      if (error.response?.status === 401) {
-        // Real auth failure — clear session
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        SetAuthToken(null);
-        navigate('/login');
-      }
-      // Network error / 5xx → StatusGate shows appropriate error page.
-      // Do NOT logout — session stays valid when server recovers.
-    }
-  }, [setUser]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    fetchUser();
-    const goOffline = () => { setIsOnline(false); setUser(p => ({ ...p, onlineStatus: false })); };
-    const goOnline  = () => { setIsOnline(true);  fetchUser(); };
-    window.addEventListener('offline', goOffline);
-    window.addEventListener('online',  goOnline);
-    return () => {
-      window.removeEventListener('offline', goOffline);
-      window.removeEventListener('online',  goOnline);
-    };
-  }, [fetchUser]);
-
-  // ── Proactive token refresh — fires 2 min before expiry ──
-  useEffect(() => {
-    if (!user?.id) return;
-
-    const schedule = () => {
-      const token = localStorage.getItem('token');
-      if (!token) return null;
-
-      const expiry = getTokenExpiry(token);
-      if (!expiry) return null;
-
-      const msUntilRefresh = expiry - Date.now() - 2 * 60 * 1000;
-
-      if (msUntilRefresh <= 0) {
-        RefreshToken(getDeviceId())
-          .then(newToken => {
-            localStorage.setItem('token', newToken);
-            SetAuthToken(newToken);
-            schedule();
-          })
-          .catch(err => {
-            if (err?.response?.status) {
-              localStorage.removeItem('token');
-              localStorage.removeItem('user');
-              navigate('/login');
-            } else {
-              console.warn('Token refresh failed — server may be sleeping. Will retry.');
-            }
-          });
-        return null;
-      }
-
-      console.log(`Token refreshes in ${Math.round(msUntilRefresh / 1000 / 60)} minutes`);
-      return setTimeout(async () => {
-        try {
-          const newToken = await RefreshToken(getDeviceId());
-          localStorage.setItem('token', newToken);
-          SetAuthToken(newToken);
-          schedule();
-        } catch (err) {
-          if (err?.response?.status) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            navigate('/login');
-          } else {
-            console.warn('Token refresh failed — server may be sleeping. Will retry.');
-            setTimeout(() => schedule(), 15_000);
-          }
-        }
-      }, msUntilRefresh);
-    };
-
-    const timer = schedule();
-    return () => { if (timer) clearTimeout(timer); };
-  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  // ── Custom hooks (replaced the 5 inline useEffect / useCallback blocks) ──
+  useAuthSession({ getUser, setUser, navigate });
+  useTokenRefresh({ user, RefreshToken, navigate });
+  useForegroundNotifications({ selectedUserRef });
+  useNotificationBridge({ markAsRead, receiverId: Selecteduser?.receiverId });
+  useTabTitle(totalUnread);
 
   return (
     <div
