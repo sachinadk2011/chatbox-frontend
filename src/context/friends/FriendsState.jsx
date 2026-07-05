@@ -9,6 +9,7 @@ export const FriendsState = (props) => {
     const [people, setPeople]               = useState([]);
     const [receivedFrdReq, setReceivedFrdReq] = useState([]);
     const [sentFrdReq, setSentFrdReq]       = useState([]);
+    const [friendsLoaded, setFriendsLoaded] = useState(false);
 
     // All API functions wrapped in useCallback(fn, []) so the useMemo value
     // is stable — prevents React.memo from being silently broken on consumers.
@@ -16,7 +17,9 @@ export const FriendsState = (props) => {
 
     const fetchFriends = useCallback(async () => {
         try {
+            setFriendsLoaded(false);
             const response = await api.get('/api/friends/fetchallfriends');
+            
             return response.data.friends;
         } catch (error) {
             console.error("Error fetching friends:", error.message);
@@ -102,8 +105,8 @@ export const FriendsState = (props) => {
         fetchSentRequests, sendFriendRequest,
         receivedFrdReq, setReceivedFrdReq,
         sentFrdReq, setSentFrdReq,
-        cancelFriendRequest,
-    }), [friends, people, receivedFrdReq, sentFrdReq]);
+        cancelFriendRequest,friendsLoaded, setFriendsLoaded
+    }), [friends, people, receivedFrdReq, sentFrdReq, friendsLoaded]);
     // All function refs are stable — only state arrays cause re-memoization.
 
     return (

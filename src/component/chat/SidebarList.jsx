@@ -41,12 +41,13 @@ const SidebarList = () => {
   const location = useLocation();
   const { setSelectedUser } = useContext(SelectedUserContext);
   const { messages, fetchMessages, setMessages } = useContext(MessageContext);
-  const { friends, fetchFriends, setFriends } = useContext(FriendsContext);
+  const { friends, fetchFriends, setFriends, setFriendsLoaded, friendsLoaded } = useContext(FriendsContext);
   const { user } = useContext(UserContext);
 
   // ── Fetch friends + messages on mount (extracted to hook) ─────────────────
-  useSidebarData({ user, fetchFriends, fetchMessages, setFriends, setMessages });
+  useSidebarData({ user, fetchFriends, fetchMessages, friends, messages, setFriends, setMessages, setFriendsLoaded });
 
+  console.info(` sidebar list render: friends loaded = ${friendsLoaded}`);
   // ── Build per-friend last-message preview data ────────────────────────────
   const lastMsg = friends.map(frd => {
     const chat = messages.find(msg => msg.otherUserId === frd._id.toString());

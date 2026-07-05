@@ -1,12 +1,14 @@
-import React, { useContext } from 'react';
-import { useNavigate, useLocation } from 'react-router';
-import Header from '../layout/Header';
-import SidebarList from './SidebarList';
-import ChatWindow from './ChatWindow';
-import SelectedUserContext from '../../context/message/SelectedUserContext';
-import TwoColumnLayout from '../layout/TwoColumnLayout';
-import { EMPTY_USER } from '../../constants/user';
-import { getBaseChatPath } from '../../utils/helpers/pathUtils';
+import React, { useContext } from "react";
+import { useNavigate, useLocation } from "react-router";
+import Header from "../layout/Header";
+import SidebarList from "./SidebarList";
+import ChatWindow from "./ChatWindow";
+import SelectedUserContext from "../../context/message/SelectedUserContext";
+import TwoColumnLayout from "../layout/TwoColumnLayout";
+import { EMPTY_USER } from "../../constants/user";
+import { getBaseChatPath } from "../../utils/helpers/pathUtils";
+import { useUrlErrorMessage } from "../../hooks/routing/useUrlErrorMessage";
+import ErrorBanner from "../ui/ErrorBanner";
 
 /**
  * ChatLayout — shared by:
@@ -24,12 +26,15 @@ import { getBaseChatPath } from '../../utils/helpers/pathUtils';
  */
 const ChatLayout = () => {
   const { Selecteduser, setSelectedUser } = useContext(SelectedUserContext);
+  const { message, dismiss } = useUrlErrorMessage();
   const navigate = useNavigate();
   const location = useLocation();
   const hasChatOpen = !!Selecteduser?.receiverId;
 
   const handleBack = () => {
-    console.info('Back button clicked. Clearing selected user and closing chat.');
+    console.info(
+      "Back button clicked. Clearing selected user and closing chat.",
+    );
     setSelectedUser(EMPTY_USER);
     navigate(getBaseChatPath(location.pathname));
   };
@@ -37,17 +42,16 @@ const ChatLayout = () => {
   return (
     <TwoColumnLayout
       hasItemOpen={hasChatOpen}
-
       sidebarContent={
         <>
           <Header />
+          {message && <ErrorBanner message={message} onDismiss={dismiss} />}
           {/* SidebarList fills remaining height and scrolls internally */}
           <div className="flex-1 min-h-0 overflow-hidden">
             <SidebarList />
           </div>
         </>
       }
-
       mainContent={
         /*
           ChatWindow receives onBack so ProfileHeader can render
@@ -57,7 +61,6 @@ const ChatLayout = () => {
         */
         <ChatWindow onBack={handleBack} />
       }
-
       emptyState={
         /* Desktop empty-state placeholder — shown when no chat is open */
         <div className="flex-1 flex flex-col items-center justify-center text-gray-400 select-none gap-3">
@@ -76,7 +79,9 @@ const ChatLayout = () => {
             />
           </svg>
           <p className="font-semibold text-base">Select a conversation</p>
-          <p className="text-sm opacity-60">Choose a friend to start chatting</p>
+          <p className="text-sm opacity-60">
+            Choose a friend to start chatting
+          </p>
         </div>
       }
     />
