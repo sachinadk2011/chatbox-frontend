@@ -44,7 +44,9 @@ console.info("app js: ", getDeviceInfo());
 
 function ProtectedRoute({ element }) {
   const { user } = useContext(UserContext);
-  return user?.id ? element : <Navigate to="/login" replace />;
+  const location = useLocation();
+
+  return user?.id ? element : <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname)}`} replace />;
 }
 
 function RootRedirect() {

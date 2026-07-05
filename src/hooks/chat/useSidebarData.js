@@ -21,7 +21,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-export const useSidebarData = ({ user, fetchFriends, fetchMessages, setFriends, setMessages }) => {
+export const useSidebarData = ({ user, fetchFriends, fetchMessages,friends, messages, setFriends, setMessages, setFriendsLoaded  }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -29,11 +29,15 @@ export const useSidebarData = ({ user, fetchFriends, fetchMessages, setFriends, 
 
     const fetchdata = async (retryCount = 0) => {
       try {
+        if (friends.length > 0 && messages.length > 0) {
+          console.info('Friends and messages already loaded, skipping fetch.');
+          return;
+        }
         const frd = await fetchFriends();
         const msg = await fetchMessages();
-
+        console.info('Fetched friends and messages:', frd, msg);
         setFriends(frd);
-
+        setFriendsLoaded(true);
         // Normalise flat message list into per-conversation buckets,
         // keeping only messages that belong to a known friend.
         setMessages(
@@ -66,10 +70,20 @@ export const useSidebarData = ({ user, fetchFriends, fetchMessages, setFriends, 
         } else if (!error.response && !error.isAuthFailure && retryCount < 2) {
           // Network-only error (no HTTP response) — server may be waking up
           console.log(`Server may be waking up, retrying in 3s (attempt ${retryCount + 1})`);
-          setTimeout(() => fetchdata(retryCount + 1), 3000);
+          setTimeout(() => {
+            fetchdata(retryCount + 1)
+            
+          
+          }, 3000);
+            
+        } 
+    // Retries exhausted, OR a non-401 4xx, OR 5xx not caught by StatusGate.
+    // Unblock useResourceFromUrl so it can resolve to "not found" instead of hanging forever.
+    console.error('Failed to load friends/messages after retries:', error);
+    setFriendsLoaded(true);
         }
         // 4xx (not 401) or 5xx → StatusGate handles the error page
-      }
+      
     };
 
     fetchdata();
